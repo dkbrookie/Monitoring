@@ -37,3 +37,6 @@ ForEach ($dc in $domainControllers) {
 #$allDCFails = $null
 #$failedDCs = $null
 #$logOutput = $null
+
+## Most recent failure event in the last hour to test
+# Get-ADForest | Select-Object -ExpandProperty GlobalCatalogs | Get-ADReplicationFailure | Where-Object {$_.firstfailuretime -gt ((get-date).addhours(-1))} | Sort-Object firstfaluretime | Select-Object -first 1

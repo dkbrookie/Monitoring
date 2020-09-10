@@ -225,7 +225,7 @@ If ($RWDCvalidity -eq $False) {
 }
 
 ## Determine SYSVOL Replication Mechanism And SYSVOL/NetLogon Location On Sourcing RWDC
-$logOutput += "SYSVOL REPLICATION MECHANISM."
+$logOutput += "SYSVOL REPLICATION MECHANISM.`r`n"
 
 ## Get The Default Naming Contexr
 $defaultNamingContext = (([ADSI]"LDAP://$SourceRWDCInADDomainFQDN/rootDSE").defaultNamingContext)
@@ -333,10 +333,10 @@ $logOutput += "Found [$($TableOfDSServersA.count)] Directory Server(s).`r`n"
 $logOutput += "CREATING TEMP TEXT FILE IN SYSVOL/NETLOGON.:"
 $domainNCDN = $defaultNamingContext
 $tempObjectName = "sysvolReplTempObject" + (Get-Date -f yyyyMMddHHmmss) + ".txt"
-$logOutput += "On RWDC.....: $SourceRWDCInADDomainFQDN`r`n"
-$logOutput += "With Full Name..: $tempObjectName`r`n"
+$logOutput += "On RWDC...: $SourceRWDCInADDomainFQDN`r`n"
+$logOutput += "With Full Name...: $tempObjectName`r`n"
 $logOutput += "With Contents...: .!!!TEMP OBJECT TO TEST SYSVOL REPLICATION LATENCY!!!.`r`n"
-$logOutput += "In AD Domain....: $ADDomainToWriteTo ($domainNCDN)`r`n"
+$logOutput += "In AD Domain...: $ADDomainToWriteTo ($domainNCDN)`r`n"
 ".!!!TEMP OBJECT TO TEST AD REPLICATION LATENCY!!!." | Out-File -FilePath $($scriptsUNCPathOnSourcingRWDC + "\" + $tempObjectName)
 $logOutput += "Temp Text File [$tempObjectName] Has Been Created In The NetLogon Share Of RWDC [$SourceRWDCInADDomainFQDN]!`r`n"
 

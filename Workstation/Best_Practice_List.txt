@@ -1,0 +1,11 @@
+1) Auto logon enabled - https://windowsreport.com/auto-login-windows-10/
+2) Local admins enabled outside of DKB account
+3) Not domain joined
+4) Not a Pro/Enterprise OS 
+5) Less than 8GBs of RAM
+6) Less than 4 cores
+7) Edited local HOSTS file
+8) Local file shares
+9) Local print shares
+10) Static IP on NIC
+11) Any service in the stopped state that we monitor

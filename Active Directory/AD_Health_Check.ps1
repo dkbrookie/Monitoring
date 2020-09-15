@@ -3,11 +3,9 @@ $logOutput = $null
 ## Clear The Screen
 Clear-Host
 
-
 ## Some Constants
 $continue = $true
 $cleanupTempObject = $true
-
 
 ## The Function To Test The Port Connection
 Function PortConnectionCheck($fqdnDC,$port,$timeOut) {
@@ -35,11 +33,16 @@ Function PortConnectionCheck($fqdnDC,$port,$timeOut) {
 }
 
 
+##################
+## Get DC FQDNs ##
+##################
 ## Get The FQDN Of The Local AD Domain From The Server This Script Is Executed On
 $ADDomainToWriteTo = $(Get-WmiObject -Class Win32_ComputerSystem).Domain
 
 
-## Get List Of Directory Servers In AD Forest
+################################################
+## Get List Of Directory Servers In AD Forest ##
+################################################
 $ThisADForest = [DirectoryServices.ActiveDirectory.Forest]::GetCurrentForest()
 $configNCDN = $ThisADForest.schema.Name.Substring(("CN=Schema,").Length)
 $searchRootNTDSdsa = [ADSI]"LDAP://CN=Sites,$configNCDN"
@@ -76,7 +79,9 @@ $objNTDSdsaRO | %{
 $TableOfDCsInADForest = $TableOfRWDCsInADForest + $TableOfRODCsInADForest
 
 
-## Get List Of DCs In AD Domain, Create And Present In A Table
+#################################################################
+## Get List Of DCs In AD Domain, Create And Present In A Table ##
+#################################################################
 $contextADDomainToWriteTo = New-Object System.DirectoryServices.ActiveDirectory.DirectoryContext("Domain",$ADDomainToWriteTo)
 $ListOfDCsInADDomain = [System.DirectoryServices.ActiveDirectory.DomainController]::findall($contextADDomainToWriteTo)
 $ListOfRWDCsInADDomain = $ListOfDCsInADDomain | ?{$_.InboundConnections -ne $null -and !($_.InboundConnections -match "RODC Connection")}
@@ -148,10 +153,10 @@ ForEach ($DC in $ListOfDCsInADDomain) {
 $logOutput += "Found [$($ListOfDCsInADDomain.count)] DC(s) In AD Domain.`r`n"
 
 
-## Specify A RWDC From The Selected AD Domain
+#########################################
+## Automatically Locate An RWDC To Use ##
+#########################################
 $SourceRWDCInADDomain = ''
-
-## If Nothing Was Specified Automatically Locate An RWDC To Use
 If ($SourceRWDCInADDomain -eq "") {
 	## Locate Just ONE DC (This Could Be An RWDC Or RODC)
 	$SourceRWDCInADDomainObjectONE = [System.DirectoryServices.ActiveDirectory.DomainController]::findone($contextADDomainToWriteTo)
@@ -224,10 +229,13 @@ If ($RWDCvalidity -eq $False) {
 	Break
 }
 
-## Determine SYSVOL Replication Mechanism And SYSVOL/NetLogon Location On Sourcing RWDC
+
+##########################################################################################
+## Determine SYSVOL Replication Mechanism And SYSVOL/NetLogon Location On Sourcing RWDC ##
+##########################################################################################
 $logOutput += "SYSVOL REPLICATION MECHANISM.`r`n"
 
-## Get The Default Naming Contexr
+## Get The Default Naming Context
 $defaultNamingContext = (([ADSI]"LDAP://$SourceRWDCInADDomainFQDN/rootDSE").defaultNamingContext)
 
 ## Find The Computer Account Of The Sourcing RWDC
@@ -239,6 +247,10 @@ $Searcher.SearchRoot = "LDAP://" + $SourceRWDCInADDomainFQDN + "/OU=Domain Contr
 ## The following appears to work on all OSes
 $dcObjectPath = $Searcher.FindAll() | %{$_.Path}
 
+
+############################
+## Check Replication Type ##
+############################
 ## Check If An NTFRS Subscriber Object Exists To Determine If NTFRS Is Being Used Instead Of DFS-R
 $SearcherNTFRS = New-Object DirectoryServices.DirectorySearcher
 $SearcherNTFRS.Filter = "(&(objectClass=nTFRSSubscriber)(name=Domain System Volume (SYSVOL share)))"
@@ -269,16 +281,23 @@ If ($dfsrSubscriptionObject -ne $null) {
     $sysvolRootPathOnSourcingRWDC = $dfsrSubscriptionObject | %{$_.Properties."msdfsr-rootpath"}
 }
 
+
+##############
+## UNC Path ##
+##############
 ## Determine The UNC Of The Folder To Write The Temp File To
 $scriptsUNCPathOnSourcingRWDC = "\\" + $SourceRWDCInADDomainFQDN + "\" + $($sysvolRootPathOnSourcingRWDC.Replace(":","$")) + "\Scripts"
 
 
+##################################
+## SYSVOL/SMB Replication Tests ##
+##################################
 ## Get List Of DCs In AD Domain To Which The Temp Object Will Replicate, Create And Present In A Table
 $logOutput += "LIST OF DIRECTORY SERVERS THE TEMP OBJECT REPLICATES TO.`r`n"
 
 ## Put The Selected RWDC Already In the Table [A] Of Directory Servers To Which The Temp Object Will Replicate
 $TableOfDSServersA = @()
-$TableOfDSServersAObj = "" | Select Name,"Site Name",Reachable
+$TableOfDSServersAObj = "" | Select-Object Name,"Site Name",Reachable
 $TableOfDSServersAObj.Name = ("$SourceRWDCInADDomainFQDN [SOURCE RWDC]").ToUpper()
 $TableOfDSServersAObj."Site Name" = $SourceRWDCInADDomainSITE
 $TableOfDSServersAObj.Reachable = "TRUE"
@@ -286,7 +305,7 @@ $TableOfDSServersA += $TableOfDSServersAObj
 
 ## Put The Selected RWDC Already In the Table [B] Of Directory Servers Where The Replication Starts
 $TableOfDSServersB = @()
-$TableOfDSServersBObj = "" | Select Name,"Site Name",Time
+$TableOfDSServersBObj = "" | Select-Object Name,"Site Name",Time
 $TableOfDSServersBObj.Name = ("$SourceRWDCInADDomainFQDN [SOURCE RWDC]").ToUpper()
 $TableOfDSServersBObj."Site Name" = $SourceRWDCInADDomainSITE
 $TableOfDSServersBObj.Time = 0.00
@@ -295,7 +314,7 @@ $TableOfDSServersB += $TableOfDSServersBObj
 ## Add All Other Remaining DCs In The Targeted AD Domain To The List Of Directory Servers [A]
 ForEach ($DC In $ListOfDCsInADDomain) {
 	If(!($DC.Name -like $SourceRWDCInADDomainFQDN)) {
-		$TableOfDSServersAObj = "" | Select Name,"Site Name",Reachable
+		$TableOfDSServersAObj = "" | Select-Object Name,"Site Name",Reachable
 		$TableOfDSServersAObj.Name = $DC.Name
 		If ($DC.SiteName -ne $null -And $DC.SiteName -ne "") {
 			$TableOfDSServersAObj."Site Name" = $DC.SiteName
@@ -308,7 +327,7 @@ ForEach ($DC In $ListOfDCsInADDomain) {
 			}
 			If (($TableOfDCsInADForest | ?{$_."DS Name" -eq $($($DC.Name).Substring(0,$($DC.Name).IndexOf(".")))} | Measure-Object).Count -gt 1) {
 				$TableOfDSServersAObj."Site Name" = "<Fail>"
-			}	
+			}
 		}
 		$smbPort = "445"
 		$timeOut = "500"
@@ -340,7 +359,6 @@ $logOutput += "In AD Domain...: $ADDomainToWriteTo ($domainNCDN)`r`n"
 ".!!!TEMP OBJECT TO TEST AD REPLICATION LATENCY!!!." | Out-File -FilePath $($scriptsUNCPathOnSourcingRWDC + "\" + $tempObjectName)
 $logOutput += "Temp Text File [$tempObjectName] Has Been Created In The NetLogon Share Of RWDC [$SourceRWDCInADDomainFQDN]!`r`n"
 
-
 ## Go Through The Process Of Checking Each Directory Server To See If The Temp Object Already Has Replicated To It
 $startDateTime = Get-Date
 $i = 0
@@ -371,11 +389,11 @@ While($continue) {
 				$logOutput += "DC Is Reachable.`r`n"
 				$objectPath = "\\" + $($DSsrv.Name) + "\Netlogon\" + $tempObjectName
 				$connectionResult = "SUCCESS"
-			}			
+			}
 			If ($DSsrv.Reachable -eq "FALSE") {
 				$logOutput += "DC Is NOT Reachable.`r`n"
 				$connectionResult = "FAILURE"
-			}			
+			}
 		}
 		
 		## If The Connection To The DC Is Successful
@@ -420,14 +438,12 @@ While($continue) {
 	}
 }
 
-
 ## Show The Start Time, The End Time And The Duration Of The Replication
 $endDateTime = Get-Date
 $duration = "{0:n2}" -f ($endDateTime.Subtract($startDateTime).TotalSeconds)
 $logOutput += "Start Time: $(Get-Date $startDateTime -format "yyyy-MM-dd HH:mm:ss")`r`n"
 $logOutput += "End Time: $(Get-Date $endDateTime -format "yyyy-MM-dd HH:mm:ss")`r`n"
 $logOutput += "Duration: $duration Seconds`r`n"
-
 
 ## Delete The Temp Object On The RWDC
 If ($cleanupTempObject) {
@@ -436,9 +452,12 @@ If ($cleanupTempObject) {
 	$logOutput += "Temp Text File [$tempObjectName] Has Been Deleted On The Target RWDC!`r`n"
 }
 
-## AD general replication test
+
+#################################
+## AD General Replication Test ##
+#################################
 ## Set acceptable time limit for replication last successful run
-$timeSpan = New-TimeSpan -Hours 2
+$timeSpan = 2
 
 ForEach ($dc in $ListOfDCsInADDomain) {
     $dcName = $dc.Name
@@ -447,7 +466,7 @@ ForEach ($dc in $ListOfDCsInADDomain) {
     $dcReplicatonSuccess = $generalReplication.LastReplicationSuccess
     $dcFails = $generalReplication.ConsecutiveReplicationFailures
     $lastReplication = $generalReplication.LastReplicationSuccess
-    If (((Get-Date) - $lastReplication) -gt $timeSpan) {
+    If ($lastReplication -lt ((get-date).addhours(-$timeSpan))) {
         If (!$allDCFails) {
             $allDCFails = "$($dcName): $dcFails Concurrent Replication Failures"
         } Else {
@@ -462,13 +481,16 @@ ForEach ($dc in $ListOfDCsInADDomain) {
         }
         $status = 'Failed'
     } Else {
-        $logOutput += "$dcName is successfully replicating! Last replication: $lastReplication`r`n"
+        $logOutput += "$dcName is successfully replicating! Last replication: $($lastReplication[0])`r`n"
         $status = 'Success'
     }
 }
 
+
+################################
 #### Check AD Recycling Bin ####
-$adRecycleBin = (Get-ADOptionalFeature -Filter * | Where {$_.Name -eq 'Recycle Bin Feature'}).EnabledScopes
+################################
+$adRecycleBin = (Get-ADOptionalFeature -Filter * | Where-Object {$_.Name -eq 'Recycle Bin Feature'}).EnabledScopes
 If (!$adRecycleBin) {
     $adRecyclbeBinEnabled = 'Failed'
     $logOutput += "The AD recycling bin is not enabled!`r`n"
@@ -477,7 +499,10 @@ If (!$adRecycleBin) {
     $logOutput += "Verified the AD recycling bin is enabled.`r`n"
 }
 
-#### Check for synchronized time ####
+
+###################################
+### Check for Synchronized Time ###
+###################################
 ForEach($dc in $ListOfDCsInADDomain){
     $w32tm = invoke-command -computername $dc -scriptblock{w32tm /monitor /computers:$dc /nowarn}
     $maxIcmp = $icmp
@@ -504,7 +529,21 @@ ForEach($dc in $ListOfDCsInADDomain){
 }
 
 
-"sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|smbConnection=$smbConnection|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|logOutput=$logOutput"
+##########################
+## Check for ShadowCopy ##
+##########################
+$shadowCopy = Get-WmiObject Win32_ShadowCopy  | Sort-Object InstallDate | Select-Object -last 1
+
+If($shadowCopy) {
+    $shadowCopyStatus = 'Enabled'
+    $latestShadowCopy = $shadowCopy.convertToDateTime(($shadowCopy.InstallDate))
+} Else {
+    $shadowCopyStatus = 'Disabled'
+    $latestShadowCopy = 'None'
+}
+
+
+"sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|smbConnection=$smbConnection|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|logOutput=$logOutput|shadowCopyStatus=$shadowCopyStatus|latestShadowCopy=$latestShadowCopy"
 
 ## For testing
 $status = $null

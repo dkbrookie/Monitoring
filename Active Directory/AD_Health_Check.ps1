@@ -150,7 +150,7 @@ ForEach ($DC in $ListOfDCsInADDomain) {
 	}
 	$TableOfDCsInADDomain += $TableOfDCsInADDomainObj
 }
-$logOutput += "Found [$($ListOfDCsInADDomain.count)] DC(s) In AD Domain.`r`n"
+$logOutput += "Found $($ListOfDCsInADDomain.count) DC(s) In AD Domain.`r`n"
 
 
 #########################################
@@ -202,30 +202,31 @@ ForEach ($DC in $ListOfRWDCsInADDomain) {
 	}
 }
 
-$logOutput += "Checking Existence And Connectivity Of The Specified RWDC '$SourceRWDCInADDomainFQDN' In The AD Domain '$ADDomainToWriteTo'.`r`n"
+$logOutput += "Checking Existence And Connectivity Of The Specified RWDC '$SourceRWDCInADDomainFQDN' In the AD domain '$ADDomainToWriteTo'.`r`n"
 If ($RWDCvalidity -eq $True) {
-	$logOutput += "The Specified DC '$SourceRWDCInADDomainFQDN' Is An RWDC And It Exists In The AD Domain '$ADDomainToWriteTo'!`r`n"
-	$logOutput += "Continuing Script.`r`n"
+	$logOutput += "Verified the specified DC '$SourceRWDCInADDomainFQDN' is an RWDC and it exists in the AD domain '$ADDomainToWriteTo'!`r`n"
 	$smbPort = "445"
 	$timeOut = "500"
 	$smbConnectionResult = $null
 	$fqdnDC = $SourceRWDCInADDomainFQDN
 	$smbConnectionResult = PortConnectionCheck $fqdnDC $smbPort $timeOut
 	If ($smbConnectionResult -eq "SUCCESS") {
-		$logOutput += "The Specified RWDC '$SourceRWDCInADDomainFQDN' Is Reachable!`r`n"
-		$logOutput += "Continuing Script.`r`n"
+		$logOutput += "The specified RWDC '$SourceRWDCInADDomainFQDN' is reachable!`r`n"
 	}
 	If ($smbConnectionResult -eq "ERROR") {
+        If ($SourceRWDCInADDomainFQDN -notmatch $unreachableDCs) {
+            $unreachableDCs += $SourceRWDCInADDomainFQDN
+        }
 		$logOutput += "The Specified RWDC '$SourceRWDCInADDomainFQDN' Is NOT Reachable!`r`n"
-		$logOutput += "Please Re-Run The Script And Make Sure To Use An RWDC That Is Reachable!`r`n"
-		$logOutput += "Aborting Script.`r`n"
+		$logOutput += "Please re-run the script and make sure to use an RWDC that is reachable!`r`n"
+		$logOutput += "Aborting script.`r`n"
 		Break
 	}
 }
 If ($RWDCvalidity -eq $False) {
-	$logOutput += "The Specified DC '$SourceRWDCInADDomainFQDN' Either Does NOT Exist In The AD Domain '$ADDomainToWriteTo' Or Is NOT And RWDC!`r`n"
-	$logOutput += "Please Re-Run The Script And Provide The FQDN Of An RWDC Within The AD Domain '$ADDomainToWriteTo' That Does Exist`r`n"
-	$logOutput += "Aborting Script.`r`n"
+	$logOutput += "The specified DC '$SourceRWDCInADDomainFQDN' either does NOT exist in the AD domain '$ADDomainToWriteTo' or is NOT and RWDC!`r`n"
+	$logOutput += "Please re-run the script and provide the FQDN of an RWDC within the AD domain '$ADDomainToWriteTo' that does exist`r`n"
+	$logOutput += "Aborting script.`r`n"
 	Break
 }
 
@@ -257,7 +258,7 @@ $SearcherNTFRS.Filter = "(&(objectClass=nTFRSSubscriber)(name=Domain System Volu
 $SearcherNTFRS.SearchRoot = $dcObjectPath
 $ntfrsSubscriptionObject = $SearcherNTFRS.FindAll()
 If ($ntfrsSubscriptionObject -ne $null) {
-    $logOutput += "SYSVOL Replication Mechanism Being Used.: NTFRS`r`n"
+    $logOutput += "SYSVOL replication mechanism being used: NTFRS`r`n"
     $sysvolRepType = 'NTFRS'
     ## Get The Local Root Path For The SYSVOL
 	## The following appears NOT to work on W2K3, but it does upper-level OSes
@@ -272,7 +273,7 @@ $SearcherDFSR.Filter = "(&(objectClass=msDFSR-Subscription)(name=SYSVOL Subscrip
 $SearcherDFSR.SearchRoot = $dcObjectPath
 $dfsrSubscriptionObject = $SearcherDFSR.FindAll()
 If ($dfsrSubscriptionObject -ne $null) {
-    $logOutput += "SYSVOL Replication Mechanism Being Used.: DFS-R`r`n"
+    $logOutput += "SYSVOL replication mechanism being used: DFS-R`r`n"
     $sysvolRepType = 'DFS-R'
     ## Get The Local Root Path For The SYSVOL
 	## The following appears NOT to work on W2K3, but it does not upper-level OSes. NOT really needed, because W2K3 does not support DFS-R for SYSVOL!
@@ -298,7 +299,7 @@ $logOutput += "LIST OF DIRECTORY SERVERS THE TEMP OBJECT REPLICATES TO.`r`n"
 ## Put The Selected RWDC Already In the Table [A] Of Directory Servers To Which The Temp Object Will Replicate
 $TableOfDSServersA = @()
 $TableOfDSServersAObj = "" | Select-Object Name,"Site Name",Reachable
-$TableOfDSServersAObj.Name = ("$SourceRWDCInADDomainFQDN [SOURCE RWDC]").ToUpper()
+$TableOfDSServersAObj.Name = ("$SourceRWDCInADDomainFQDN").ToUpper()
 $TableOfDSServersAObj."Site Name" = $SourceRWDCInADDomainSITE
 $TableOfDSServersAObj.Reachable = "TRUE"
 $TableOfDSServersA += $TableOfDSServersAObj
@@ -306,7 +307,7 @@ $TableOfDSServersA += $TableOfDSServersAObj
 ## Put The Selected RWDC Already In the Table [B] Of Directory Servers Where The Replication Starts
 $TableOfDSServersB = @()
 $TableOfDSServersBObj = "" | Select-Object Name,"Site Name",Time
-$TableOfDSServersBObj.Name = ("$SourceRWDCInADDomainFQDN [SOURCE RWDC]").ToUpper()
+$TableOfDSServersBObj.Name = ("$SourceRWDCInADDomainFQDN").ToUpper()
 $TableOfDSServersBObj."Site Name" = $SourceRWDCInADDomainSITE
 $TableOfDSServersBObj.Time = 0.00
 $TableOfDSServersB += $TableOfDSServersBObj
@@ -345,67 +346,71 @@ ForEach ($DC In $ListOfDCsInADDomain) {
 		$TableOfDSServersA += $TableOfDSServersAObj
 	}
 }
-$logOutput += "Found [$($TableOfDSServersA.count)] Directory Server(s).`r`n"
+$logOutput += "Found $($TableOfDSServersA.count) Directory Server(s).`r`n"
 
 
 ## Create The Temp Object On The Targeted RWDC
-$logOutput += "CREATING TEMP TEXT FILE IN SYSVOL/NETLOGON.:"
+$logOutput += "CREATING TEMP TEXT FILE IN SYSVOL/NETLOGON on $SourceRWDCInADDomainFQDN on domain $ADDomainToWriteTo ($domainNCDN)`r`n"
 $domainNCDN = $defaultNamingContext
 $tempObjectName = "sysvolReplTempObject" + (Get-Date -f yyyyMMddHHmmss) + ".txt"
-$logOutput += "On RWDC...: $SourceRWDCInADDomainFQDN`r`n"
-$logOutput += "With Full Name...: $tempObjectName`r`n"
-$logOutput += "With Contents...: .!!!TEMP OBJECT TO TEST SYSVOL REPLICATION LATENCY!!!.`r`n"
-$logOutput += "In AD Domain...: $ADDomainToWriteTo ($domainNCDN)`r`n"
 ".!!!TEMP OBJECT TO TEST AD REPLICATION LATENCY!!!." | Out-File -FilePath $($scriptsUNCPathOnSourcingRWDC + "\" + $tempObjectName)
-$logOutput += "Temp Text File [$tempObjectName] Has Been Created In The NetLogon Share Of RWDC [$SourceRWDCInADDomainFQDN]!`r`n"
+$logOutput += "Temp text file $tempObjectName has been create din the NetLogon Share of $SourceRWDCInADDomainFQDN!`r`n"
 
 ## Go Through The Process Of Checking Each Directory Server To See If The Temp Object Already Has Replicated To It
 $startDateTime = Get-Date
-$i = 0
-$logOutput += "Found [$($TableOfDSServersA.count)] Directory Server(s).`r`n"
+$logOutput += "Found $($TableOfDSServersA.count) Directory Server(s).`r`n"
+$tries = 10
 
-While($continue) {
-    $i++
+$logOutput += "Each DC in the list below must be at least accessible through SMB over TCP (445)`r`n"
+While($continue -and $loops -lt $tries) {
+    $loops++
     $oldpos = $host.UI.RawUI.CursorPosition
-    $logOutput += "Each DC In The List Below Must Be At Least Accessible Through SMB Over TCP (445)`r`n"
-    Start-Sleep 1
+    Start-Sleep 2
     $replicated = $true
 	
 	## For Each Directory Server In The List/Table [A] Perform A Number Of Steps
     ForEach ($DSsrv in $TableOfDSServersA) {
-		If ($DSsrv.Name -match $SourceRWDCInADDomainFQDN) {
-			$logOutput += "Contacting DC In AD domain .[$($DSsrv.Name.ToUpper())].`r`n"
-			$logOutput += "DC Is Reachable.`r`n"
-			$logOutput += "Object [$tempObjectName] Exists In The NetLogon Share`r`n"
+		If ($DSsrv.Name -match $SourceRWDCInADDomainFQDN -and $completedDCs -notmatch $DSsrv.Name) {
+			$logOutput += "Attempting to contact $($DSsrv.Name.ToUpper())...`r`n"
+			$logOutput += "$($DSsrv.Name.ToUpper()) is reachable.`r`n"
+            $logOutput += "Object $tempObjectName exists in the netlogon share of $($DSsrv.Name.ToUpper())`r`n"
+            $completedDCs += $DSsrv.Name
 			continue
 		}
 
 		## If The Directory Server Is A DC In The AD Domain, Then Connect Through LDAP (TCP:445)
-        If ($DSsrv.Name -notmatch $SourceRWDCInADDomainFQDN) {
-			
-			$logOutput += "Contacting DC In AD domain .[$($DSsrv.Name.ToUpper())].`r`n"
+        If ($DSsrv.Name -notmatch $SourceRWDCInADDomainFQDN -and $completedDCs -notmatch $DSsrv.Name) {
+            If ($loop -gt 0) {
+                $logOutput += "Retrying connection to $($DSsrv.Name.ToUpper())...`r`n"
+            } Else {
+                $logOutput += "Attempting to contact $($DSsrv.Name.ToUpper())...`r`n"
+            }
 			$connectionResult = $null
 			If ($DSsrv.Reachable -eq "TRUE") {
-				$logOutput += "DC Is Reachable.`r`n"
+				$logOutput += "$($DSsrv.Name.ToUpper()) is reachable.`r`n"
 				$objectPath = "\\" + $($DSsrv.Name) + "\Netlogon\" + $tempObjectName
 				$connectionResult = "SUCCESS"
 			}
 			If ($DSsrv.Reachable -eq "FALSE") {
-				$logOutput += "DC Is NOT Reachable.`r`n"
+                If ($DSsrv.Name -notmatch $unreachableDCs) {
+                    [array]$unreachableDCs += $DSsrv.Name.ToUpper()
+                }
+				$logOutput += "$($DSsrv.Name.ToUpper()) is NOT reachable.`r`n"
 				$connectionResult = "FAILURE"
-			}
-		}
+            }
+        }
 		
 		## If The Connection To The DC Is Successful
-		If ($connectionResult -eq "SUCCESS") {
+		If ($connectionResult -eq "SUCCESS" -and $completedDCs -notmatch $DSsrv.Name) {
 			If (Test-Path -Path $objectPath) {
 				## If The Temp Object Already Exists
-                $logOutput += "Object [$tempObjectName] Now Does Exist In The NetLogon Share`r`n"
+                $logOutput += "Confirmed object $tempObjectName exists in the NetLogon Share of $($DSsrv.Name.ToUpper())`r`n"
+                $completedDCs += $DSsrv.Name
                 If ($sysvolTest -ne 'Failed') {
                     $sysvolTest = 'Success'
                 }
 				If (!($TableOfDSServersB | ?{$_.Name -match $DSsrv.Name})) {
-					$TableOfDSServersBobj = "" | Select Name,"Site Name",Time
+					$TableOfDSServersBobj = "" | Select-Object Name,"Site Name",Time
 					$TableOfDSServersBobj.Name = $DSsrv.Name
 					$TableOfDSServersBObj."Site Name" = $DSsrv."Site Name"
 					$TableOfDSServersBObj.Time = ("{0:n2}" -f ((Get-Date)-$startDateTime).TotalSeconds)
@@ -413,7 +418,7 @@ While($continue) {
 				}
 			} Else {
 				## If The Temp Object Does Not Yet Exist
-                $logOutput += "Object [$tempObjectName] Does NOT Exist Yet In The NetLogon Share`r`n"
+                $logOutput += "Object $tempObjectName does NOT exist yet in the NetLogon Share of $($DSsrv.Name.ToUpper())`r`n"
                 $sysvolTest = 'Failed'
 				$replicated  = $false
 			}
@@ -421,9 +426,9 @@ While($continue) {
 		
 		## If The Connection To The DC Is Unsuccessful
 		If ($connectionResult -eq "FAILURE") {
-			$logOutput += "Unable To Connect To DC/GC And Check For The Temp Object.`r`n"
+			$logOutput += "Unable to connect to $($DSsrv.Name.ToUpper()) and check for the temp object.`r`n"
 			If (!($TableOfDSServersB | ?{$_.Name -match $DSsrv.Name})) {
-				$TableOfDSServersBobj = "" | Select Name,"Site Name",Time
+				$TableOfDSServersBobj = "" | Select-Object Name,"Site Name",Time
 				$TableOfDSServersBobj.Name = $DSsrv.Name
 				$TableOfDSServersBObj."Site Name" = $DSsrv."Site Name"
 				$TableOfDSServersBObj.Time = "<Fail>"
@@ -449,7 +454,7 @@ $logOutput += "Duration: $duration Seconds`r`n"
 If ($cleanupTempObject) {
     $logOutput += "Deleting Temp Text File.`r`n"
     Remove-Item $($scriptsUNCPathOnSourcingRWDC + "\" + $tempObjectName) -Force
-	$logOutput += "Temp Text File [$tempObjectName] Has Been Deleted On The Target RWDC!`r`n"
+	$logOutput += "Temp Text File $tempObjectName Has Been Deleted On The Target RWDC!`r`n"
 }
 
 
@@ -458,31 +463,26 @@ If ($cleanupTempObject) {
 #################################
 ## Set acceptable time limit for replication last successful run
 $timeSpan = 2
-
 ForEach ($dc in $ListOfDCsInADDomain) {
     $dcName = $dc.Name
     $logOutput += "Checking $dcName for general replication status.`r`n"
     $generalReplication = Get-ADReplicationPartnerMetadata -Target $dcName -Scope Server -EA 0
-    $dcReplicatonSuccess = $generalReplication.LastReplicationSuccess
-    $dcFails = $generalReplication.ConsecutiveReplicationFailures
-    $lastReplication = $generalReplication.LastReplicationSuccess
-    If ($lastReplication -lt ((get-date).addhours(-$timeSpan))) {
-        If (!$allDCFails) {
-            $allDCFails = "$($dcName): $dcFails Concurrent Replication Failures"
+    ForEach ($partner in $generalReplication) {
+        $pattern = '(?<=\,)(.*?)(?=\,)'
+        $parterName = $partner.Partner 
+        $parterName = [regex]::replace((([regex]::match($parterName,$pattern)).value),'CN=','')
+        $dcReplicatonSuccess = $partner.LastReplicationSuccess
+        $dcFails = $partner.ConsecutiveReplicationFailures
+        $lastReplication = $partner.LastReplicationSuccess
+        If ($lastReplication -lt ((get-date).addhours(-$timeSpan))) {
+            $allDCFails += "Source: $dcName, Destination: $parterName, $dcFails Concurrent Replication Failures"
+            $logOutput += "$dcName is failing replication to $parterName! Last replication: $dcReplicatonSuccess. Consecutive Failures: $dcFails.`r`n"
+            $failedDCs += $dcName
+            $status = 'Failed'
         } Else {
-            $allDCFails += "`r`n$($dcName): $dcFails Concurrent Replication Failures"
+            $logOutput += "$dcName is successfully replicating to $parterName! Last replication: $lastReplication`r`n"
+            $status = 'Success'
         }
-            
-        $logOutput += "$dcName is failing replication. Last successful replication $dcReplicatonSuccess and currently has $dcFails consecutive failed replication attempts.`r`n"
-        If (!$failedDCs) {
-            $script:failedDCs = $dcName
-        } Else {
-            $script:failedDCs += "`r`n$dcName"
-        }
-        $status = 'Failed'
-    } Else {
-        $logOutput += "$dcName is successfully replicating! Last replication: $($lastReplication[0])`r`n"
-        $status = 'Success'
     }
 }
 
@@ -543,10 +543,13 @@ If($shadowCopy) {
 }
 
 
-"sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|smbConnection=$smbConnection|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|logOutput=$logOutput|shadowCopyStatus=$shadowCopyStatus|latestShadowCopy=$latestShadowCopy"
+"sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|smbConnection=$smbConnection|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|unreachableDCs=$unreachableDCs|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|shadowCopyStatus=$shadowCopyStatus|latestShadowCopy=$latestShadowCopy|logOutput=$logOutput"
 
 ## For testing
 $status = $null
 $allDCFails = $null
 $failedDCs = $null
 $logOutput = $null
+$loops = $null
+$unreachableDCs = $null
+$completedDCs = $null

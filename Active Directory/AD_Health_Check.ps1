@@ -214,8 +214,8 @@ If ($RWDCvalidity -eq $True) {
 		$logOutput += "The specified RWDC '$SourceRWDCInADDomainFQDN' is reachable!`r`n"
 	}
 	If ($smbConnectionResult -eq "ERROR") {
-        If ($SourceRWDCInADDomainFQDN -notmatch $unreachableDCs) {
-            $unreachableDCs += $SourceRWDCInADDomainFQDN
+        If ($SourceRWDCInADDomainFQDN -notin $unreachableDCs) {
+            [array]$unreachableDCs += $SourceRWDCInADDomainFQDN
         }
 		$logOutput += "The Specified RWDC '$SourceRWDCInADDomainFQDN' Is NOT Reachable!`r`n"
 		$logOutput += "Please re-run the script and make sure to use an RWDC that is reachable!`r`n"
@@ -365,7 +365,7 @@ $logOutput += "Each DC in the list below must be at least accessible through SMB
 While($continue -and $loops -lt $tries) {
     $loops++
     $oldpos = $host.UI.RawUI.CursorPosition
-    Start-Sleep 2
+    Start-Sleep 5
     $replicated = $true
 	
 	## For Each Directory Server In The List/Table [A] Perform A Number Of Steps
@@ -373,7 +373,7 @@ While($continue -and $loops -lt $tries) {
 		If ($DSsrv.Name -match $SourceRWDCInADDomainFQDN -and $completedDCs -notmatch $DSsrv.Name) {
 			$logOutput += "Attempting to contact $($DSsrv.Name.ToUpper())...`r`n"
 			$logOutput += "$($DSsrv.Name.ToUpper()) is reachable.`r`n"
-            $logOutput += "Object $tempObjectName exists in the netlogon share of $($DSsrv.Name.ToUpper())`r`n"
+            $logOutput += "Confirmed object $tempObjectName exists in the netlogon share of $($DSsrv.Name.ToUpper())`r`n"
             $completedDCs += $DSsrv.Name
 			continue
 		}
@@ -392,8 +392,8 @@ While($continue -and $loops -lt $tries) {
 				$connectionResult = "SUCCESS"
 			}
 			If ($DSsrv.Reachable -eq "FALSE") {
-                If ($DSsrv.Name -notmatch $unreachableDCs) {
-                    [array]$unreachableDCs += $DSsrv.Name.ToUpper()
+                If ($DSsrv.Name -notin $unreachableDCs) {
+                    [array]$unreachableDCs += $DSsrv.Name
                 }
 				$logOutput += "$($DSsrv.Name.ToUpper()) is NOT reachable.`r`n"
 				$connectionResult = "FAILURE"
@@ -475,7 +475,7 @@ ForEach ($dc in $ListOfDCsInADDomain) {
         $dcFails = $partner.ConsecutiveReplicationFailures
         $lastReplication = $partner.LastReplicationSuccess
         If ($lastReplication -lt ((get-date).addhours(-$timeSpan))) {
-            $allDCFails += "Source: $dcName, Destination: $parterName, $dcFails Concurrent Replication Failures"
+            [array]$allDCFails += "Source: $dcName, Destination: $parterName, $dcFails Concurrent Replication Failures"
             $logOutput += "$dcName is failing replication to $parterName! Last replication: $dcReplicatonSuccess. Consecutive Failures: $dcFails.`r`n"
             $failedDCs += $dcName
             $status = 'Failed'
@@ -503,28 +503,30 @@ If (!$adRecycleBin) {
 ###################################
 ### Check for Synchronized Time ###
 ###################################
-ForEach($dc in $ListOfDCsInADDomain){
-    $w32tm = invoke-command -computername $dc -scriptblock{w32tm /monitor /computers:$dc /nowarn}
-    $maxIcmp = $icmp
-    $icmp = (($w32tm -like "*ICMP*") -replace "ICMP:","" -replace "ms delay","").Trim()
-    If ($maxIcmp -lt $icmp) {
+ForEach($dc in $ListOfDCsInADDomain) {
+    If ($dc -notin $unreachableDCs) {
+        $w32tm = invoke-command -computername $dc -scriptblock{w32tm /monitor /computers:$dc /nowarn}
         $maxIcmp = $icmp
-    }
-    If ($icmp -le "0") {
-        $logOutput += "Confirmed time synchronisation is functional for $dc. $($icmp)ms variance.`r`n"
-        If ($timeStatus -ne 'Warning' -and $timeStatus -ne 'Failed') {
-            $timeStatus = 'Success'
+        $icmp = (($w32tm -like "*ICMP*") -replace "ICMP:","" -replace "ms delay","").Trim()
+        If ($maxIcmp -lt $icmp) {
+            $maxIcmp = $icmp
         }
-    }
-    If ($icmp -gt "100000") {
-        $logOutput += "Warning, 2 minutes time difference on $dc`r`n"
-        If ($timeStatus -ne 'Failed') {
-            $timeStatus = 'Warning'
+        If ($icmp -le "0") {
+            $logOutput += "Confirmed time synchronisation is functional for $dc. $($icmp)ms variance.`r`n"
+            If ($timeStatus -ne 'Warning' -and $timeStatus -ne 'Failed') {
+                $timeStatus = 'Success'
+            }
         }
-    }
-    If ($icmp -gt "300000") {
-        $logOutput += "Critical. Over 5 minutes time difference on $dc!`r`n"
-        $timeStatus = 'Failed'
+        If ($icmp -gt "100000") {
+            $logOutput += "Warning, 2 minutes time difference on $dc`r`n"
+            If ($timeStatus -ne 'Failed') {
+                $timeStatus = 'Warning'
+            }
+        }
+        If ($icmp -gt "300000") {
+            $logOutput += "Critical. Over 5 minutes time difference on $dc!`r`n"
+            $timeStatus = 'Failed'
+        }
     }
 }
 
@@ -537,9 +539,11 @@ $shadowCopy = Get-WmiObject Win32_ShadowCopy  | Sort-Object InstallDate | Select
 If($shadowCopy) {
     $shadowCopyStatus = 'Enabled'
     $latestShadowCopy = $shadowCopy.convertToDateTime(($shadowCopy.InstallDate))
+    $logOutput += "Verified Shadowcopy is enabled`r`n"
 } Else {
     $shadowCopyStatus = 'Disabled'
     $latestShadowCopy = 'None'
+    $logOutput += "Shadowcopy is disabled!"
 }
 
 

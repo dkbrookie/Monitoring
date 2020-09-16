@@ -465,7 +465,7 @@ If ($cleanupTempObject) {
 $timeSpan = 2
 ForEach ($dc in $ListOfDCsInADDomain) {
     $dcName = $dc.Name
-    $logOutput += "Checking $dcName for general replication status.`r`n"
+    $logOutput += "Checking $dcName for general replication status...`r`n"
     $generalReplication = Get-ADReplicationPartnerMetadata -Target $dcName -Scope Server -EA 0
     ForEach ($partner in $generalReplication) {
         $pattern = '(?<=\,)(.*?)(?=\,)'

@@ -87,7 +87,7 @@ $ListOfDCsInADDomain = [System.DirectoryServices.ActiveDirectory.DomainControlle
 $ListOfRWDCsInADDomain = $ListOfDCsInADDomain | ?{$_.InboundConnections -ne $null -and !($_.InboundConnections -match "RODC Connection")}
 $ListOfRODCsInADDomain = $ListOfDCsInADDomain | ?{$_.InboundConnections -match "RODC Connection"}
 $TableOfDCsInADDomain = @()
-$logOutput += "LIST OF DCs IN THE AD DOMAIN '$ADDomainToWriteTo'.`r`n"
+$logOutput += "LIST OF DCs IN THE AD DOMAIN $ADDomainToWriteTo.`r`n"
 ForEach ($DC in $ListOfDCsInADDomain) {
 	$TableOfDCsInADDomainObj = "" | Select Name,PDC,"Site Name","DS Type","IP Address","OS Version"
 	$TableOfDCsInADDomainObj.Name = $DC.Name
@@ -202,30 +202,30 @@ ForEach ($DC in $ListOfRWDCsInADDomain) {
 	}
 }
 
-$logOutput += "Checking Existence And Connectivity Of The Specified RWDC '$SourceRWDCInADDomainFQDN' In the AD domain '$ADDomainToWriteTo'.`r`n"
+$logOutput += "Checking Existence And Connectivity Of The Specified RWDC $SourceRWDCInADDomainFQDN In the AD domain $ADDomainToWriteTo.`r`n"
 If ($RWDCvalidity -eq $True) {
-	$logOutput += "Verified the specified DC '$SourceRWDCInADDomainFQDN' is an RWDC and it exists in the AD domain '$ADDomainToWriteTo'!`r`n"
+	$logOutput += "Verified the specified DC $SourceRWDCInADDomainFQDN is an RWDC and it exists in the AD domain $ADDomainToWriteTo!`r`n"
 	$smbPort = "445"
 	$timeOut = "500"
 	$smbConnectionResult = $null
 	$fqdnDC = $SourceRWDCInADDomainFQDN
 	$smbConnectionResult = PortConnectionCheck $fqdnDC $smbPort $timeOut
 	If ($smbConnectionResult -eq "SUCCESS") {
-		$logOutput += "The specified RWDC '$SourceRWDCInADDomainFQDN' is reachable!`r`n"
+		$logOutput += "The specified RWDC $SourceRWDCInADDomainFQDN is reachable!`r`n"
 	}
 	If ($smbConnectionResult -eq "ERROR") {
         If ($SourceRWDCInADDomainFQDN -notin $unreachableDCs) {
             [array]$unreachableDCs += $SourceRWDCInADDomainFQDN
         }
-		$logOutput += "The Specified RWDC '$SourceRWDCInADDomainFQDN' Is NOT Reachable!`r`n"
+		$logOutput += "The Specified RWDC $SourceRWDCInADDomainFQDN Is NOT Reachable!`r`n"
 		$logOutput += "Please re-run the script and make sure to use an RWDC that is reachable!`r`n"
 		$logOutput += "Aborting script.`r`n"
 		Break
 	}
 }
 If ($RWDCvalidity -eq $False) {
-	$logOutput += "The specified DC '$SourceRWDCInADDomainFQDN' either does NOT exist in the AD domain '$ADDomainToWriteTo' or is NOT and RWDC!`r`n"
-	$logOutput += "Please re-run the script and provide the FQDN of an RWDC within the AD domain '$ADDomainToWriteTo' that does exist`r`n"
+	$logOutput += "The specified DC $SourceRWDCInADDomainFQDN either does NOT exist in the AD domain $ADDomainToWriteTo or is NOT and RWDC!`r`n"
+	$logOutput += "Please re-run the script and provide the FQDN of an RWDC within the AD domain $ADDomainToWriteTo that does exist`r`n"
 	$logOutput += "Aborting script.`r`n"
 	Break
 }

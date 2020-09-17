@@ -553,7 +553,7 @@ Try {
 }
 
 
-"sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|unreachableDCs=$unreachableDCs|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|shadowCopyStatus=$shadowCopyStatus|latestShadowCopy=$latestShadowCopy|logOutput=$logOutput"
+"errors=$errosOut|sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|unreachableDCs=$unreachableDCs|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|shadowCopyStatus=$shadowCopyStatus|latestShadowCopy=$latestShadowCopy|logOutput=$logOutput"
 
 ## For testing
 $status = $null

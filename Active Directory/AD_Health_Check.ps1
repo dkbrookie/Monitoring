@@ -290,7 +290,9 @@ If ($dfsrSubscriptionObject -ne $null) {
 ## UNC Path ##
 ##############
 ## Determine The UNC Of The Folder To Write The Temp File To
-$scriptsUNCPathOnSourcingRWDC = "\\" + $SourceRWDCInADDomainFQDN + "\" + $($sysvolRootPathOnSourcingRWDC.Replace(":","$")) + "\Scripts"
+#$scriptsUNCPathOnSourcingRWDC = "\\" + $SourceRWDCInADDomainFQDN + "\" + $($sysvolRootPathOnSourcingRWDC.Replace(":","$")) + "\Scripts"
+$scriptsUNCPathOnSourcingRWDC = $sysvolRootPathOnSourcingRWDC
+
 
 
 ##################################
@@ -492,9 +494,9 @@ ForEach ($dc in $ListOfDCsInADDomain) {
 }
 
 
-################################
-#### Check AD Recycling Bin ####
-################################
+############################
+## Check AD Recycling Bin ##
+############################
 $adRecycleBin = (Get-ADOptionalFeature -Filter * | Where-Object {$_.Name -eq 'Recycle Bin Feature'}).EnabledScopes
 If (!$adRecycleBin) {
     $adRecyclbeBinEnabled = 'Failed'
@@ -505,9 +507,9 @@ If (!$adRecycleBin) {
 }
 
 
-###################################
-### Check for Synchronized Time ###
-###################################
+#################################
+## Check for Synchronized Time ##
+#################################
 ForEach($dc in $ListOfDCsInADDomain) {
     If ($dc -notin $unreachableDCs) {
         Try {

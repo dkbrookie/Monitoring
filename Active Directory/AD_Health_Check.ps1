@@ -341,6 +341,7 @@ ForEach ($DC In $ListOfDCsInADDomain) {
 		}
 		If ($smbConnectionResult -eq "ERROR") {
             $TableOfDSServersAObj.Reachable = "FALSE"
+            $logOutput += "Failed the SMB connection to $($DC.Name). This generally means port 445 is NOT open to this server.`r`n"
             $smbConnection = 'Failed'
 		}
 		$TableOfDSServersA += $TableOfDSServersAObj

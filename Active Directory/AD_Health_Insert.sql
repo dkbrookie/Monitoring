@@ -1,5 +1,4 @@
-INSERT
-INTO dkb_monitoring_ad (
+INSERT INTO dkb_monitoring_ad (
     `ComputerID`
     ,`sysvolSmbConnection`
     ,`sysvolRepType`
@@ -15,9 +14,10 @@ INTO dkb_monitoring_ad (
     ,`shadowCopyStatus`
     ,`latestShadowCopy`
     ,`logOutput`
+    ,`dateLastUpdated`
 )
 VALUES (
-    /*ComputerID*/%ComputerID%
+    /*ComputerID*/'%ComputerID%'
     ,/*sysvolSmbConnection*/'@sysvolSmbConnection@'
     ,/*sysvolRepType*/'@sysvolRepType@'
     ,/*sysvolRepTest*/'@sysvolRepTest@'
@@ -32,6 +32,7 @@ VALUES (
     ,/*shadowCopyStatus*/'@shadowCopyStatus@'
     ,/*latestShadowCopy*/'@latestShadowCopy@'
     ,/*logOutput*/'@logOutput@'
+    ,/*dateLastUpdated*/NOW()
 )
 ON DUPLICATE KEY UPDATE
     `sysvolSmbConnection` = '@sysvolSmbConnection@'
@@ -48,3 +49,4 @@ ON DUPLICATE KEY UPDATE
     ,`shadowCopyStatus` = '@shadowCopyStatus@'
     ,`latestShadowCopy` = '@latestShadowCopy@'
     ,`logOutput` = '@logOutput@'
+    ,`dateLastUPdated` = NOW()

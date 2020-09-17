@@ -11,10 +11,13 @@ $cleanupTempObject = $true
 Function PortConnectionCheck($fqdnDC,$port,$timeOut) {
 	$tcpPortSocket = $null
 	$portConnect = $null
-	$tcpPortWait = $null
+    $tcpPortWait = $null
+    ## For some reason the socket test on 445 sometimes fails if you use the full FQDN so we're removing
+    ## the .domain.xx from the end of the host name we're trying to test
+    $fqdnDC = ($fqdnDC) -replace (".$($dc.Domain.Name)",'')
 	$tcpPortSocket = New-Object System.Net.Sockets.TcpClient
 	$portConnect = $tcpPortSocket.BeginConnect($fqdnDC,$port,$null,$null)
-	$tcpPortWait = $portConnect.AsyncWaitHandle.WaitOne($timeOut,$false)
+    $tcpPortWait = $portConnect.AsyncWaitHandle.WaitOne($timeOut,$false)
 	If(!$tcpPortWait) {
 		$tcpPortSocket.Close()
 		Return "ERROR"
@@ -397,7 +400,8 @@ While($continue -and $loops -lt $tries) {
                     [array]$unreachableDCs += $DSsrv.Name
                 }
 				$logOutput += "$($DSsrv.Name.ToUpper()) is NOT reachable.`r`n"
-				$connectionResult = "FAILURE"
+                $connectionResult = "FAILURE"
+                $logOutput += "Failed the SMB connection to $($DC.Name). This generally means port 445 is NOT open to this server.`r`n"
             }
         }
 		

@@ -534,7 +534,7 @@ ForEach($dc in $ListOfDCsInADDomain) {
 ##########################
 ## Check for ShadowCopy ##
 ##########################
-$shadowCopy = Get-WmiObject Win32_ShadowCopy  | Sort-Object InstallDate | Select-Object -last 1
+$shadowCopy = Get-WmiObject Win32_ShadowCopy -EA 0 | Sort-Object InstallDate | Select-Object -last 1
 
 If($shadowCopy) {
     $shadowCopyStatus = 'Enabled'

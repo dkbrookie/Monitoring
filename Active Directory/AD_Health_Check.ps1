@@ -505,27 +505,32 @@ If (!$adRecycleBin) {
 ###################################
 ForEach($dc in $ListOfDCsInADDomain) {
     If ($dc -notin $unreachableDCs) {
-        $w32tm = invoke-command -computername $dc -scriptblock{w32tm /monitor /computers:$dc /nowarn}
-        $maxIcmp = $icmp
-        $icmp = (($w32tm -like "*ICMP*") -replace "ICMP:","" -replace "ms delay","").Trim()
-        If ($maxIcmp -lt $icmp) {
+        Try {
+            $w32tm = invoke-command -computername $dc -scriptblock{w32tm /monitor /computers:$dc /nowarn} -EA Stop
             $maxIcmp = $icmp
-        }
-        If ($icmp -le "0") {
-            $logOutput += "Confirmed time synchronisation is functional for $dc. $($icmp)ms variance.`r`n"
-            If ($timeStatus -ne 'Warning' -and $timeStatus -ne 'Failed') {
-                $timeStatus = 'Success'
+            $icmp = (($w32tm -like "*ICMP*") -replace "ICMP:","" -replace "ms delay","").Trim()
+            If ($maxIcmp -lt $icmp) {
+                $maxIcmp = $icmp
             }
-        }
-        If ($icmp -gt "100000") {
-            $logOutput += "Warning, 2 minutes time difference on $dc`r`n"
-            If ($timeStatus -ne 'Failed') {
-                $timeStatus = 'Warning'
+            If ($icmp -le "0") {
+                $logOutput += "Confirmed time synchronisation is functional for $dc. $($icmp)ms variance.`r`n"
+                If ($timeStatus -ne 'Warning' -and $timeStatus -ne 'Failed') {
+                    $timeStatus = 'Success'
+                }
             }
-        }
-        If ($icmp -gt "300000") {
-            $logOutput += "Critical. Over 5 minutes time difference on $dc!`r`n"
-            $timeStatus = 'Failed'
+            If ($icmp -gt "100000") {
+                $logOutput += "Warning, 2 minutes time difference on $dc`r`n"
+                If ($timeStatus -ne 'Failed') {
+                    $timeStatus = 'Warning'
+                }
+            }
+            If ($icmp -gt "300000") {
+                $logOutput += "Critical. Over 5 minutes time difference on $dc!`r`n"
+                $timeStatus = 'Failed'
+            }
+        } Catch {
+            $timeStatus = 'Error'
+            $logOutput += "Encountered an error when trying to check the time sync status.`r`n"
         }
     }
 }

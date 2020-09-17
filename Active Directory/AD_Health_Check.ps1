@@ -534,16 +534,22 @@ ForEach($dc in $ListOfDCsInADDomain) {
 ##########################
 ## Check for ShadowCopy ##
 ##########################
-$shadowCopy = Get-WmiObject Win32_ShadowCopy -EA 0 | Sort-Object InstallDate | Select-Object -last 1
+Try {
+    $shadowCopy = Get-WmiObject Win32_ShadowCopy -EA Stop | Sort-Object InstallDate | Select-Object -last 1
 
-If($shadowCopy) {
-    $shadowCopyStatus = 'Enabled'
-    $latestShadowCopy = $shadowCopy.convertToDateTime(($shadowCopy.InstallDate))
-    $logOutput += "Verified Shadowcopy is enabled`r`n"
-} Else {
-    $shadowCopyStatus = 'Disabled'
+    If($shadowCopy) {
+        $shadowCopyStatus = 'Enabled'
+        $latestShadowCopy = $shadowCopy.convertToDateTime(($shadowCopy.InstallDate))
+        $logOutput += "Verified Shadowcopy is enabled`r`n"
+    } Else {
+        $shadowCopyStatus = 'Disabled'
+        $latestShadowCopy = 'None'
+        $logOutput += "Shadowcopy is disabled!"
+    }
+} Catch {
+    $shadowCopyStatus = 'Error'
     $latestShadowCopy = 'None'
-    $logOutput += "Shadowcopy is disabled!"
+    $logOutput += "Failed to get the status of Shadowcopy. Verbose error log out: $Error"
 }
 
 

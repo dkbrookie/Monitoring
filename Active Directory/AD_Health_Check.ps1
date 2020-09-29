@@ -285,19 +285,13 @@ If ($dfsrSubscriptionObject -ne $null) {
     $sysvolRootPathOnSourcingRWDC = $dfsrSubscriptionObject | %{$_.Properties."msdfsr-rootpath"}
 }
 
-
-##############
-## UNC Path ##
-##############
-## Determine The UNC Of The Folder To Write The Temp File To
-#$scriptsUNCPathOnSourcingRWDC = "\\" + $SourceRWDCInADDomainFQDN + "\" + $($sysvolRootPathOnSourcingRWDC.Replace(":","$")) + "\Scripts"
-$scriptsUNCPathOnSourcingRWDC = $sysvolRootPathOnSourcingRWDC
-
-
-
 ##################################
 ## SYSVOL/SMB Replication Tests ##
 ##################################
+## Determine The UNC Of The Folder To Write The Temp File To
+#$scriptsUNCPathOnSourcingRWDC = "\\" + $SourceRWDCInADDomainFQDN + "\" + $($sysvolRootPathOnSourcingRWDC.Replace(":","$")) + "\Scripts"
+$scriptsUNCPathOnSourcingRWDC = "$sysvolRootPathOnSourcingRWDC\Scripts"
+
 ## Get List Of DCs In AD Domain To Which The Temp Object Will Replicate, Create And Present In A Table
 $logOutput += "LIST OF DIRECTORY SERVERS THE TEMP OBJECT REPLICATES TO.`r`n"
 

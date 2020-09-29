@@ -353,7 +353,8 @@ $logOutput += "Found $($TableOfDSServersA.count) Directory Server(s).`r`n"
 $logOutput += "CREATING TEMP TEXT FILE IN SYSVOL/NETLOGON on $SourceRWDCInADDomainFQDN on domain $ADDomainToWriteTo ($domainNCDN)`r`n"
 $domainNCDN = $defaultNamingContext
 $tempObjectName = "sysvolReplTempObject" + (Get-Date -f yyyyMMddHHmmss) + ".txt"
-".!!!TEMP OBJECT TO TEST AD REPLICATION LATENCY!!!." | Out-File -FilePath $($scriptsUNCPathOnSourcingRWDC + "\" + $tempObjectName)
+Set-Content -Value '.!!!TEMP OBJECT TO TEST AD REPLICATION LATENCY!!!.' -Path $($scriptsUNCPathOnSourcingRWDC + "\" + $tempObjectName)
+#".!!!TEMP OBJECT TO TEST AD REPLICATION LATENCY!!!." | Out-File -FilePath $($scriptsUNCPathOnSourcingRWDC + "\" + $tempObjectName)
 $logOutput += "Temp text file $tempObjectName has been create din the NetLogon Share of $SourceRWDCInADDomainFQDN!`r`n"
 
 ## Go Through The Process Of Checking Each Directory Server To See If The Temp Object Already Has Replicated To It

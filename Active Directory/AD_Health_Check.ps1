@@ -352,8 +352,9 @@ $logOutput += "Found $($TableOfDSServersA.count) Directory Server(s).`r`n"
 ## Create The Temp Object On The Targeted RWDC
 $logOutput += "CREATING TEMP TEXT FILE IN SYSVOL/NETLOGON on $SourceRWDCInADDomainFQDN on domain $ADDomainToWriteTo ($domainNCDN)`r`n"
 $domainNCDN = $defaultNamingContext
-$tempObjectName = "sysvolReplTempObject" + (Get-Date -f yyyyMMddHHmmss) + ".txt"
-Set-Content -Value '.!!!TEMP OBJECT TO TEST AD REPLICATION LATENCY!!!.' -Path $($scriptsUNCPathOnSourcingRWDC + "\" + $tempObjectName)
+#$tempObjectName = "sysvolReplTempObject" + (Get-Date -f yyyyMMddHHmmss) + ".txt"
+$tempObjectName = "testRep.txt"
+#Set-Content -Value '.!!!TEMP OBJECT TO TEST AD REPLICATION LATENCY!!!.' -Path $($scriptsUNCPathOnSourcingRWDC + "\" + $tempObjectName)
 #".!!!TEMP OBJECT TO TEST AD REPLICATION LATENCY!!!." | Out-File -FilePath $($scriptsUNCPathOnSourcingRWDC + "\" + $tempObjectName)
 $logOutput += "Temp text file $tempObjectName has been create din the NetLogon Share of $SourceRWDCInADDomainFQDN!`r`n"
 

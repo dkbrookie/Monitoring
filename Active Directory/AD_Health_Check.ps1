@@ -465,28 +465,33 @@ If ($cleanupTempObject) {
 ## AD General Replication Test ##
 #################################
 ## Set acceptable time limit for replication last successful run
-$timeSpan = 2
-ForEach ($dc in $ListOfDCsInADDomain) {
-    $dcName = $dc.Name
-    $logOutput += "Checking $dcName for general replication status...`r`n"
-    $generalReplication = Get-ADReplicationPartnerMetadata -Target $dcName -Scope Server -EA 0
-    ForEach ($partner in $generalReplication) {
-        $pattern = '(?<=\,)(.*?)(?=\,)'
-        $parterName = $partner.Partner 
-        $parterName = [regex]::replace((([regex]::match($parterName,$pattern)).value),'CN=','')
-        $dcReplicatonSuccess = $partner.LastReplicationSuccess
-        $dcFails = $partner.ConsecutiveReplicationFailures
-        $lastReplication = $partner.LastReplicationSuccess
-        If ($lastReplication -lt ((get-date).addhours(-$timeSpan))) {
-            [array]$allDCFails += "Source: $dcName, Destination: $parterName, $dcFails Concurrent Replication Failures"
-            $logOutput += "$dcName is failing replication to $parterName! Last replication: $dcReplicatonSuccess. Consecutive Failures: $dcFails.`r`n"
-            $failedDCs += $dcName
-            $status = 'Failed'
-        } Else {
-            $logOutput += "$dcName is successfully replicating to $parterName! Last replication: $lastReplication`r`n"
-            $status = 'Success'
+$os = (Get-CimInstance Win32_OperatingSystem).Caption
+If ($os -like '*2012*' -or $os -like '*2016*' -or $os -like '*2019*') {
+    $timeSpan = 2
+    ForEach ($dc in $ListOfDCsInADDomain) {
+        $dcName = $dc.Name
+        $logOutput += "Checking $dcName for general replication status...`r`n"
+        $generalReplication = Get-ADReplicationPartnerMetadata -Target $dcName -Scope Server -EA 0
+        ForEach ($partner in $generalReplication) {
+            $pattern = '(?<=\,)(.*?)(?=\,)'
+            $parterName = $partner.Partner 
+            $parterName = [regex]::replace((([regex]::match($parterName,$pattern)).value),'CN=','')
+            $dcReplicatonSuccess = $partner.LastReplicationSuccess
+            $dcFails = $partner.ConsecutiveReplicationFailures
+            $lastReplication = $partner.LastReplicationSuccess
+            If ($lastReplication -lt ((get-date).addhours(-$timeSpan))) {
+                [array]$allDCFails += "Source: $dcName, Destination: $parterName, $dcFails Concurrent Replication Failures"
+                $logOutput += "$dcName is failing replication to $parterName! Last replication: $dcReplicatonSuccess. Consecutive Failures: $dcFails.`r`n"
+                $failedDCs += $dcName
+                $status = 'Failed'
+            } Else {
+                $logOutput += "$dcName is successfully replicating to $parterName! Last replication: $lastReplication`r`n"
+                $status = 'Success'
+            }
         }
     }
+} Else {
+    $logOutput += "$os unsupport for the general replication check`r`n"
 }
 
 

@@ -491,6 +491,9 @@ If ($os -like '*2012*' -or $os -like '*2016*' -or $os -like '*2019*') {
         }
     }
 } Else {
+    $status = 'Unsuported OS'
+    $failedDCs = 'Unsupported OS'
+    $allDCFails = 'Unsupported OS'
     $logOutput += "$os unsupport for the general replication check`r`n"
 }
 
@@ -566,7 +569,7 @@ Try {
 }
 
 
-"errors=$errosOut|sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|unreachableDCs=$unreachableDCs|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|shadowCopyStatus=$shadowCopyStatus|latestShadowCopy=$latestShadowCopy|logOutput=$logOutput"
+"errors=$errorsOut|sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|unreachableDCs=$unreachableDCs|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|shadowCopyStatus=$shadowCopyStatus|latestShadowCopy=$latestShadowCopy|logOutput=$logOutput"
 
 ## For testing
 $status = $null

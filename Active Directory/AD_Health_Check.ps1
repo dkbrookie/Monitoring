@@ -572,7 +572,6 @@ If ($forestLevel -eq $dcOS) {
     $forestTest = 'Failed'
     $logOutput += "The domain functional level is lower than the OS and needs to be upgraded!`r`n"
 }
-$forestLevel = "Forest: $forestLevel DC OS: $dcOS"
 
 
 ###########################
@@ -614,7 +613,7 @@ If ($forestTest -eq 'Failed') {
     $fixLog += "::ISSUE:: The domain forest functional level is lower than the DC OS: Upgraded domain functionality levels incorporate new features that can only be taken advantage of when all domain controllers in either the domain or forest have been upgraded to the same version.`r`n"
 }
 
-"errors=$errorsOut|sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|unreachableDCs=$unreachableDCs|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|shadowCopyStatus=$shadowCopyStatus|latestShadowCopy=$latestShadowCopy|forestTest=$forestTest|forestLevel=$forestLevel|logOutput=$logOutput|fixLog=$fixLog"
+"errors=$errorsOut|sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|unreachableDCs=$unreachableDCs|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|shadowCopyStatus=$shadowCopyStatus|latestShadowCopy=$latestShadowCopy|forestTest=$forestTest|forestLevel=$forestLevel|os=$os|logOutput=$logOutput|fixLog=$fixLog"
 
 ## For testing
 $status = $null

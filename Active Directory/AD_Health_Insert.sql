@@ -13,6 +13,9 @@ INSERT INTO dkb_monitoring_ad (
     ,`maxTimeSyncVariance`
     ,`shadowCopyStatus`
     ,`latestShadowCopy`
+    ,`forestTest`
+    ,`forestLevel`
+    ,`fixLog`
     ,`logOutput`
     ,`dateLastUpdated`
 )
@@ -31,6 +34,9 @@ VALUES (
     ,/*maxTimeSyncVariance*/'@maxTimeSyncVariance@'
     ,/*shadowCopyStatus*/'@shadowCopyStatus@'
     ,/*latestShadowCopy*/'@latestShadowCopy@'
+    ,/*forestTest*/'@forestTest@'
+    ,/*forestLevel*/'@forestLevel@'
+    ,/*fixLog*/'@fixLog@'
     ,/*logOutput*/'@logOutput@'
     ,/*dateLastUpdated*/NOW()
 )
@@ -48,5 +54,8 @@ ON DUPLICATE KEY UPDATE
     ,`maxTimeSyncVariance` = '@maxTimeSyncVariance@'
     ,`shadowCopyStatus` = '@shadowCopyStatus@'
     ,`latestShadowCopy` = '@latestShadowCopy@'
+    ,`forestTest` = '@forestTest@'
+    ,`forestLevel` = '@forestLevel@'
+    ,`fixLog` = '@fixLog@'
     ,`logOutput` = '@logOutput@'
     ,`dateLastUPdated` = NOW()

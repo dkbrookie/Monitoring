@@ -15,6 +15,7 @@ INSERT INTO dkb_monitoring_ad (
     ,`latestShadowCopy`
     ,`forestTest`
     ,`forestLevel`
+    ,`OS`
     ,`fixLog`
     ,`logOutput`
     ,`dateLastUpdated`
@@ -36,6 +37,7 @@ VALUES (
     ,/*latestShadowCopy*/'@latestShadowCopy@'
     ,/*forestTest*/'@forestTest@'
     ,/*forestLevel*/'@forestLevel@'
+    ,/*OS*/'@OS@'
     ,/*fixLog*/'@fixLog@'
     ,/*logOutput*/'@logOutput@'
     ,/*dateLastUpdated*/NOW()
@@ -56,6 +58,7 @@ ON DUPLICATE KEY UPDATE
     ,`latestShadowCopy` = '@latestShadowCopy@'
     ,`forestTest` = '@forestTest@'
     ,`forestLevel` = '@forestLevel@'
+    ,`os` = '@os@'
     ,`fixLog` = '@fixLog@'
     ,`logOutput` = '@logOutput@'
     ,`dateLastUPdated` = NOW()

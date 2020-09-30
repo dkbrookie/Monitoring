@@ -592,25 +592,25 @@ $logOutput += $Error
 
 ## Notate fixes per issue found
 If ($smbConnection -eq 'Failed') {
-    $fixLog += "::ISSUE:: SMB connection has failed: This means $env:COMPUTERNAME was unable to access the SYSVOL share for some or all of the domain controllers in your AD environment.`r`n"
+    $fixLog += "--ISSUE-- SMB connection has failed: This means $env:COMPUTERNAME was unable to access the SYSVOL share for some or all of the domain controllers in your AD environment.`r`n"
 }
 If ($sysvolTest -eq 'Failed') {
     $fixLog += "::ISSUE:: SYSVOL replication test has failed: The script that tested this functionality created a test text file in \\$env:COMPUTERNAME\SYSVOL\, then tested to see if the other domain controllers had this file in their \\dcname\SYSVOL\ share. This allows about 5min for the replication to occure and if the file never appears on other DCs, this status is set to failed.`r`n"
 }
 If ($status -eq 'Failed') {
-    $fixLog += "::ISSUE:: Get-ADReplicationPartnerMetadata command has failed: The that tested this functionality has tried to run the Get-ADReplicationPartnerMetadata command from source $env:COMPUTERNAME to each DC in AD. If it reports any failures, this status is set to Failed. This means you have replcation issues on your domain controller(s). Error details: $generalRepFailDetails.`r`n"
+    $fixLog += "--ISSUE-- Get-ADReplicationPartnerMetadata command has failed: The that tested this functionality has tried to run the Get-ADReplicationPartnerMetadata command from source $env:COMPUTERNAME to each DC in AD. If it reports any failures, this status is set to Failed. This means you have replcation issues on your domain controller(s). Error details: $generalRepFailDetails.`r`n"
 }
 If ($adRecyclbeBinEnabled -eq 'Failed') {
-    $fixLog += "::ISSUE:: AD Recycling Bin is not enabled: The AD recycling bin allows you to quickly restore deleted objects without the need of a system state or 3rd party backup. The recycle bin feature preserves all link valued and non link valued attributes. This means that a restored object will retain all it's settings when restored.`r`n"
+    $fixLog += "--ISSUE-- AD Recycling Bin is not enabled: The AD recycling bin allows you to quickly restore deleted objects without the need of a system state or 3rd party backup. The recycle bin feature preserves all link valued and non link valued attributes. This means that a restored object will retain all it's settings when restored.`r`n"
 }
 If ($timeStatus -eq 'Failed') {
-    $fixLog += "::ISSUE:: Time sync failures: If the time is off between DCs, this can cause authentication issues, replication issues, and many other issues. See a good breakdown of reasons time sync matters here: https://docs.microsoft.com/en-us/archive/blogs/nepapfe/its-simple-time-configuration-in-active-directory.`r`n"
+    $fixLog += "--ISSUE-- Time sync failures: If the time is off between DCs, this can cause authentication issues, replication issues, and many other issues. See a good breakdown of reasons time sync matters here: https://docs.microsoft.com/en-us/archive/blogs/nepapfe/its-simple-time-configuration-in-active-directory.`r`n"
 }
 If ($shadowCopyStatus -eq 'Failed') {
-    $fixLog += "::ISSUE:: Shadowcopy is not enabled: While shadow copy isn't the gold standard for data recovery/revisioning, it's an easy piece of the backup/restore puzzle to enable so that's why this is flagged. No downside, turn it on.`r`n"
+    $fixLog += "--ISSUE-- Shadowcopy is not enabled: While shadow copy isn't the gold standard for data recovery/revisioning, it's an easy piece of the backup/restore puzzle to enable so that's why this is flagged. No downside, turn it on.`r`n"
 }
 If ($forestTest -eq 'Failed') {
-    $fixLog += "::ISSUE:: The domain forest functional level is lower than the DC OS: Upgraded domain functionality levels incorporate new features that can only be taken advantage of when all domain controllers in either the domain or forest have been upgraded to the same version.`r`n"
+    $fixLog += "--ISSUE-- The domain forest functional level is lower than the DC OS: Upgraded domain functionality levels incorporate new features that can only be taken advantage of when all domain controllers in either the domain or forest have been upgraded to the same version.`r`n"
 }
 
 "errors=$errorsOut|sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|unreachableDCs=$unreachableDCs|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|shadowCopyStatus=$shadowCopyStatus|latestShadowCopy=$latestShadowCopy|forestTest=$forestTest|forestLevel=$forestLevel|os=$os|logOutput=$logOutput|fixLog=$fixLog"

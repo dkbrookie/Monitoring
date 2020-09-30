@@ -461,9 +461,9 @@ If ($cleanupTempObject) {
 }
 
 
-#################################
-## AD General Replication Test ##
-#################################
+#########################
+## AD Replication Test ##
+#########################
 ## Set acceptable time limit for replication last successful run
 $os = (Get-CimInstance Win32_OperatingSystem).Caption
 If ($os -like '*2012*' -or $os -like '*2016*' -or $os -like '*2019*') {
@@ -550,23 +550,34 @@ ForEach($dc in $ListOfDCsInADDomain) {
 ##########################
 ## Check for ShadowCopy ##
 ##########################
-Try {
-    $shadowCopy = Get-WmiObject Win32_ShadowCopy -EA Stop | Sort-Object InstallDate | Select-Object -last 1
+$shadowCopy = Get-WmiObject Win32_ShadowCopy -EA 0 | Sort-Object InstallDate | Select-Object -last 1
 
-    If($shadowCopy) {
-        $shadowCopyStatus = 'Enabled'
-        $latestShadowCopy = $shadowCopy.convertToDateTime(($shadowCopy.InstallDate))
-        $logOutput += "Verified Shadowcopy is enabled`r`n"
-    } Else {
-        $shadowCopyStatus = 'Disabled'
-        $latestShadowCopy = 'None'
-        $logOutput += "Shadowcopy is disabled!"
-    }
-} Catch {
-    $shadowCopyStatus = 'Error'
+If($shadowCopy) {
+    $shadowCopyStatus = 'Enabled'
+    $latestShadowCopy = $shadowCopy.convertToDateTime(($shadowCopy.InstallDate))
+    $logOutput += "Verified Shadowcopy is enabled`r`n"
+} Else {
+    $shadowCopyStatus = 'Disabled'
     $latestShadowCopy = 'None'
-    $logOutput += "Failed to get the status of Shadowcopy. Verbose error log out: $Error"
+    $logOutput += "Shadowcopy is disabled!"
 }
+
+
+###########################
+## Clean up final output ##
+###########################
+If (!$unreachableDCs) {
+    $unreachableDCs = 'None'
+}
+If (!$allDCFails) {
+    $allDCFails = 'None'
+}
+If (!$failedDCs) {
+    $failedDCs = 'None'
+}
+
+## Append errors to the total log output
+$logOutput += $Error
 
 
 "errors=$errorsOut|sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|unreachableDCs=$unreachableDCs|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|shadowCopyStatus=$shadowCopyStatus|latestShadowCopy=$latestShadowCopy|logOutput=$logOutput"

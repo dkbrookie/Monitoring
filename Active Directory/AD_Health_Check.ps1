@@ -229,7 +229,13 @@ If ($RWDCvalidity -eq $True) {
 }
 If ($RWDCvalidity -eq $False) {
 	$logOutput += "The specified DC $SourceRWDCInADDomainFQDN either does NOT exist in the AD domain $ADDomainToWriteTo or is NOT and RWDC OR is the only DC in the environment!`r`n"
-	$logOutput += "Please re-run the script and provide the FQDN of an RWDC within the AD domain $ADDomainToWriteTo that does exist`r`n"
+    $smbConnection = 'Single DC'
+    $sysvolRepType = 'Single DC'
+    $sysvolTest = 'Single DC'
+    $duration = 'Single DC'
+    $status = 'Single DC'
+    $timeStatus = 'Single DC'
+    $maxIcmp = 'Single DC'
 } Else {
     ##########################################################################################
     ## Determine SYSVOL Replication Mechanism And SYSVOL/NetLogon Location On Sourcing RWDC ##

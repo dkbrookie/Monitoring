@@ -595,7 +595,7 @@ If ($smbConnection -eq 'Failed') {
     $fixLog += "--ISSUE-- SMB connection has failed: This means $env:COMPUTERNAME was unable to access the SYSVOL share for some or all of the domain controllers in your AD environment.`r`n"
 }
 If ($sysvolTest -eq 'Failed') {
-    $fixLog += "--ISSUE-- SYSVOL replication test has failed: The script that tested this functionality created a test text file in \\\\$env:COMPUTERNAME\\SYSVOL\\, then tested to see if the other domain controllers had this file in their \\\\dcname\SYSVOL\\ share. This allows about 5min for the replication to occurs and if the file never appears on other DCs, this status is set to failed.`r`n"
+    $fixLog += "--ISSUE-- SYSVOL replication test has failed: The script that tested this functionality created a test text file in \\\\$env:COMPUTERNAME\\SYSVOL\\, then tested to see if the other domain controllers had this file in their \\\\dcname\SYSVOL\\ share. This allows about 5min for the replication to occur and if the file never appears on other DCs, this status is set to failed.`r`n"
 }
 If ($status -eq 'Failed') {
     $fixLog += "--ISSUE-- Get-ADReplicationPartnerMetadata command has failed: The that tested this functionality has tried to run the Get-ADReplicationPartnerMetadata command from source $env:COMPUTERNAME to each DC in AD. If it reports any failures, this status is set to Failed. This means you have replcation issues on your domain controller(s). Error details: $generalRepFailDetails.`r`n"

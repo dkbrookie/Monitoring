@@ -606,7 +606,7 @@ If ($adRecyclbeBinEnabled -eq 'Failed') {
 If ($timeStatus -eq 'Failed') {
     $fixLog += "--ISSUE-- Time sync failures: If the time is off between DCs, this can cause authentication issues, replication issues, and many other issues. See a good breakdown of reasons time sync matters here: https://docs.microsoft.com/en-us/archive/blogs/nepapfe/its-simple-time-configuration-in-active-directory.`r`n"
 }
-If ($shadowCopyStatus -eq 'Failed') {
+If ($shadowCopyStatus -eq 'Disabled') {
     $fixLog += "--ISSUE-- Shadowcopy is not enabled: While shadow copy is not the gold standard for data recovery/revisioning, it is an easy piece of the backup/restore puzzle to enable so that is why this is flagged. No downside, turn it on.`r`n"
 }
 If ($forestTest -eq 'Failed') {

@@ -141,7 +141,7 @@ ForEach ($vm in $runningVMs) {
 If (!$cpuCompatStatus) {
     $cpuCompatStatus = 'Success'
 }
-If ($cpuCompatVMs -eq 'VMs with CPU Compatibility disabled: ') {
+If ($cpuCompatVMs -eq "VMs with CPU Compatibility disabled:`r`n") {
     $cpuCompatVMs = 'None'
 }
 

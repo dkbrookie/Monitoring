@@ -1,0 +1,2 @@
+1) Ensure leases are available
+2) Ensure IP conflict detection is enabled

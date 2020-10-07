@@ -113,7 +113,7 @@ controlled. To merge manually, check this article: https://www.nakivo.com/blog/m
 $VHDs = Get-VM | Get-VMHardDiskDrive
 ForEach ($VHD in $VHDs){
     If ($vhd.path -match 'avhd') {
-        $avhdxDetails += "$($VHD.VMName) is running on AVHD: $($VHD.path) `r`n"
+        $avhdxDetails += "$($VHD.VMName) is running on AVHD: $($VHD.path)`r`n"
         $avhdxStatus = 'Failed'
     }
 }

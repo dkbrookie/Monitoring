@@ -9,3 +9,4 @@
 9) Local print shares
 10) Static IP on NIC
 11) Any service in the stopped state that we monitor
+12) Service running as user

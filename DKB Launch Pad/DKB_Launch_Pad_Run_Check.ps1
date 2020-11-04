@@ -1,4 +1,7 @@
+## Set script constants
 $launchPadName = 'DKB Launch Pad'
+## If the EXE has spaces the actual EXE name in the install dir will have underscores instead of spaces so
+## accounting for that here.
 $launchPadExeName = $launchPadName -replace (' ','_')
 $psexecUrl = 'https://download.sysinternals.com/files/PSTools.zip'
 $psexecDir = "$env:windir\LTSvc\Packages\Software\PSExec"

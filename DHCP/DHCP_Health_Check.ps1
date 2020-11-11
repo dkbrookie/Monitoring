@@ -68,3 +68,4 @@ Try {
 "errors=$errorsOut|dhcpLeaseStatus=$dhcpLeaseStatus|conflictDetectionStatus=$conflictDetectionStatus|logOutput=$logOutput|fixLog=$fixLog"
 
 $logOutput = $null
+$fixLog = $null

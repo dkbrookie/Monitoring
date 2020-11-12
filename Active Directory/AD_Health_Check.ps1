@@ -236,11 +236,13 @@ If ($RWDCvalidity -eq $False) {
     $status = 'Single DC'
     $timeStatus = 'Single DC'
     $maxIcmp = 'Single DC'
+    $singleDCTest = 'Failed'
 } Else {
     ##########################################################################################
     ## Determine SYSVOL Replication Mechanism And SYSVOL/NetLogon Location On Sourcing RWDC ##
     ##########################################################################################
     $logOutput += "SYSVOL REPLICATION MECHANISM.`r`n"
+    $singleDCTest = 'Success'
 
     ## Get The Default Naming Context
     $defaultNamingContext = (([ADSI]"LDAP://$SourceRWDCInADDomainFQDN/rootDSE").defaultNamingContext)
@@ -580,6 +582,22 @@ If ($forestLevel -eq $dcOS) {
 }
 
 
+########################################
+## Check Default Domain Admin Enabled ##
+########################################
+Try {
+    $defaultAdmin = (Get-ADUser -Filter * | Where {$_.sid -match “-500”}).Enabled
+    If ($defaultAdmin) {
+        $defaultAdminStatus = 'Failed'
+    } Else {
+        $defaultAdminStatus = 'Success'
+    }
+} Catch {
+    $defaultAdminStatus = 'Error'
+    $logOutput += "There was a problem when trying to detect the default domain admin account. Unable to to confirm whether or not the account exists.`r`n"
+}
+
+
 ###########################
 ## Clean up final output ##
 ###########################
@@ -618,8 +636,11 @@ If ($shadowCopyStatus -eq 'Disabled') {
 If ($forestTest -eq 'Failed') {
     $fixLog += "--ISSUE-- The domain forest functional level is lower than the DC OS: Upgraded domain functionality levels incorporate new features that can only be taken advantage of when all domain controllers in either the domain or forest have been upgraded to the same version.`r`n"
 }
+If ($defaultAdminStatus -eq 'Failed') {
+    $fixLog += "--ISSUE-- The default domain administrator account is enabled: The default domain administrator account is the first target in an attack on any domain and best practice is to keep this account disabled.`r`n"
+}
 
-"errors=$errorsOut|sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|unreachableDCs=$unreachableDCs|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|shadowCopyStatus=$shadowCopyStatus|latestShadowCopy=$latestShadowCopy|forestTest=$forestTest|forestLevel=$forestLevel|os=$os|logOutput=$logOutput|fixLog=$fixLog"
+"errors=$errorsOut|sysvolSmbConnection=$smbConnection|sysvolRepType=$sysvolRepType|sysvolRepTest=$sysvolTest|sysvolFileRepTime=$duration|unreachableDCs=$unreachableDCs|generalReplicationStatus=$status|generalRepFailDetails=$allDCFails|generalRepFailedDCs=$failedDCs|adRecycleBinEnabled=$adRecyclbeBinEnabled|timeSyncStatus=$timeStatus|maxTimeSyncVariance=$maxIcmp|shadowCopyStatus=$shadowCopyStatus|latestShadowCopy=$latestShadowCopy|forestTest=$forestTest|forestLevel=$forestLevel|os=$os|defaultAdminStatus=$defaultAdminStatus|singleDCTest=$singleDCTest|logOutput=$logOutput|fixLog=$fixLog"
 
 ## For testing
 $status = $null
@@ -631,3 +652,5 @@ $unreachableDCs = $null
 $completedDCs = $null
 $fixLog = $null
 $forestLevel = $null
+$defaultAdminStatus = $null
+$singleDCTest = $null

@@ -72,40 +72,70 @@ $fixLog = $null
 
 
 
-<#
-.SYNOPSIS
-Get-DhcpServerLog – Reads the Windows DHCP server logs
+function Get-DhcpEventLogs {
+    <#
+    .SYNOPSIS
+    Get-DhcpEventLogs-- Reads the Windows DHCP server logs
 
-.DESCRIPTION 
-The Windows DHCP server logs are stored in CSV format in C:\Windows\System32\dhcp
-It's difficult to read these logs in Notepad due to them being in CSV format. 
-By default, this script reads the last 20 lines of the current day's log, and
-converts each line into a PSObject.
+    .DESCRIPTION 
+    The Windows DHCP server logs are stored in CSV format in C:\Windows\System32\dhcp. It's difficult to 
+    read these logs in Notepad due to them being in CSV format. This script converts each line of the log
+    file into a PSObject and then processes through it with the parameters you specify below. Additionally, 
+    the PSObject will contain descriptive versions of the ID and QResult fields
 
-Additionally, the PSObject will also contain descriptive versions of the ID and QResult fields
+    .PARAMETER Lines
+    Define the total number of events you want returned. This is to help control long query times since
+    sometimes these log files can be thousands and thousands of lines long. By default this is 500.
 
-.OUTPUTS
-A PSObject, output from ConvertFrom-CSV
+    .PARAMETER EventIDs
+    Specify a list of specific Event IDs to pull. See all available Event IDs below in the $idMeanings
+    section to figure out which Event IDs you'd like to pull. By default, this is 14,15,22,31,56,57,58,
+    61,62 which are the most common error codes for DHCP.
 
-.EXAMPLE
-Get-DhcpServerLog -Lines 100 -GroupEvents No
-#>
+    .PARAMETER LogDays
+    Specify how many days back you want to retrieve logs for. Note that the maximum is 7 days. Default
+    is 1 day.
 
-function Get-DhcpServerLog {
+    .PARAMETER GroupEvents
+    Group all events by ID number to just get a quick snapshot of all unique events returned instead
+    of a verbose long list of events. By default this is No.
+
+    .OUTPUTS
+    A PSObject, output from ConvertFrom-CSV
+
+    .EXAMPLE
+    Get-DhcpEventLogs -Lines 200 -EventIds 11,12,52 -GroupEvents No -LogDays 5
+    Get-DhcpEventLogs -EventIDs 31 -GroupEvents Yes -LogDays 2
+    #>
+
     param(
         [parameter(Position=0,Mandatory=$false)]
         [Alias("count")]
         [int]$Lines = 500,
 
-        [parameter(Position=3,Mandatory=$false)]
-        [ValidateSet("Mon","Tue", "Wed", "Thu", "Fri", IgnoreCase=$true)]
-        [string]$Day = (get-date).DayOfWeek.ToString().Substring(0,3),
+        [parameter(Mandatory=$false)]
+        [ValidateSet(00,01,02,10,11,12,13,14,15,16,17,18,20,21,22,23,24,25,30,31,32,33,34,35,36,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64)]
+        [array]$EventIDs = (14,15,22,31,56,57,58,61,62),
+
+        [parameter(Mandatory=$false)]
+        [ValidateSet(1,2,3,4,5,6,7)]
+        [int]$LogDays = 1,
 
         [parameter(Mandatory=$false)]
         [ValidateSet('Yes','No')]
-        [string]$GroupEvents = 'Yes'
+        [string]$GroupEvents = 'No'        
     )
-    Write-Verbose "Get-DHCPServerLog called with parameters – Lines:$Lines, Day:$Day"
+    
+    ## Logs are stored in flat text files and they store them by day name...it's odd, but is what it is. Because
+    ## of this, if we want to pull logs for more than 1 day, we need to get-content of as many log files as we can
+    ## and then later compare the parsed dates of the events to the time period specified above in the $LogDays
+    ## parameter. By default the log time is just 7 days so we're pulling logs for every day of the week and calling
+    ## it good.
+    If ($LogDays -le 1) {
+        [array]$days = (get-date).DayOfWeek.ToString().Substring(0,3)
+    } Else {
+        [array]$days = 'Mon','Tue','Wed','Thu','Fri','Sat','Sun'
+    }
 
     # CSV header fields, to be used later when converting each line of the tailed log from CSV
     $headerFields = @("ID","Date","Time","Description","IP Address","Host Name","MAC Address","User Name","TransactionID","QResult","Probationtime","CorrelationID","Dhcid","VendorClass(Hex)","VendorClass(ASCII)","UserClass(Hex)","UserClass(ASCII)","RelayAgentInformation","DnsRegError")
@@ -156,28 +186,40 @@ function Get-DhcpServerLog {
     }
 
     $qResultMeanings = @{0 = "No Quarantine"; 1 = "Quarantine"; 2 = "Drop Packet"; 3 = "Probation"; 6 = "No Quarantine Information"}
-
-    $filePath = "$env:SystemRoot\System32\dhcp\DhcpSrvLog-$Day.log"
     
     Write-Verbose "Attempting to search for DHCP log at location: $filePath"
     if ((Test-Path $filePath) -eq $false) { throw "Couldn't locate DHCP log at $filePath" }
 
     Write-Verbose "Reading last $Lines lines from DHCP log at location: $filePath"
-    $errorEvents = Get-Content $filePath –tail $Lines | ConvertFrom-Csv –Header $headerFields | Select-Object *,@{n="ID Description";e={$idMeanings[[int]::parse($_.ID)]}},@{n="QResult Description";e={$qResultMeanings[[int]::parse($_.QResult)]}}
+    ForEach ($day in $days) {
+        $filePath = "$env:SystemRoot\System32\dhcp\DhcpSrvLog-$day.log"
+        $errorEvents += Get-Content $filePath –tail $Lines | ConvertFrom-Csv –Header $headerFields | Select-Object *,@{n="ID Description";e={$idMeanings[[int]::parse($_.ID)]}},@{n="QResult Description";e={$qResultMeanings[[int]::parse($_.QResult)]}}
+    }
+    ## Loop through each event log entry so we can sort through the different IDs. Some events are NOT errors
+    ## and even if they are we don't necassarily care about them. We're going to process through each one and
+    ## pick out the ones we want to look at.
     ForEach ($errorEvent in $errorEvents) {
-        If (14,15,22,31,56,57,58,61,62 -contains $errorEvent.Id) {
-            [array]$totalEvents += $errorEvent
+        If (($errorEvent.Date) -and $errorEvent.Id -ne 'QResult: 0: NoQuarantine' -and $errorEvent.ID -ne 'ID') {
+            [datetime]$date = $errorEvent.Date + ' ' + $errorEvent.Time
+            ## Here you define the EventIDs we want to check for
+            If ($EventIDs -contains $errorEvent.Id -and $date -gt (Get-Date).AddDays(-$LogDays)) {
+                [array]$totalEvents += $errorEvent
+            }
         }
     }
 
+    ## Here we check to see if the GroupEvents option was set to yes, then group them with Sort-Object ID -Unique 
+    ## if it is Yes
     If ($GroupEvents -eq 'Yes') {
         $totalEvents | Sort-Object Id -Unique | Select-Object ID, Date, Time, Description, 'IP Address', 'Host Name', QResult, DnsRegError, 'ID Description'
     } Else {
         $totalEvents | Select-Object ID, Date, Time, Description, 'IP Address', 'Host Name', QResult, DnsRegError, 'ID Description'
     }
 
+    ## Output total number of events found per event ID. This will help determine if this is a one off issue or
+    ## a reoccuring problem that's going to need more investigation
     Write-Output "Name is the EventID, and Count is the Total times the event has occured out of the last total 500 events.`r`n"
-    $totalEvents.Id | group | Select-Object Name, Count
+    $totalEvents.Id | Group-Object | Select-Object Name, Count
 
     If ($totalEvents) {
         $global:createTicket = 'Yes'

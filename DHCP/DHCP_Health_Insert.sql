@@ -1,10 +1,11 @@
-INSERT INTO dkb_monitoring_ad (
+INSERT INTO dkb_monitoring_dhcp (
     `ComputerID`
-    ,`dhcpLeaseStatus`
-    ,`conflictDetectionStatus`
-    ,`fixLog`
-    ,`logOutput`
-    ,`dateLastUpdated`
+    ,`DhcpLeaseStatus`
+    ,`ConflictDetectionStatus`
+    ,`CreateTicket`
+    ,`FixLog`
+    ,`LogOutput`
+    ,`DateLastUpdated`
 )
 VALUES (
     /*ComputerID*/'%ComputerID%'
@@ -15,8 +16,9 @@ VALUES (
     ,/*dateLastUpdated*/NOW()
 )
 ON DUPLICATE KEY UPDATE
-    `dhcpLeaseStatus` = '@dhcpLeaseStatus@'
-    ,`conflictDetectionStatus` = '@conflictDetectionStatus@'
-    ,`fixLog` = '@fixLog@'
-    ,`logOutput` = '@logOutput@'
-    ,`dateLastUPdated` = NOW()
+    `DhcpLeaseStatus` = '@dhcpLeaseStatus@'
+    ,`ConflictDetectionStatus` = '@conflictDetectionStatus@'
+    ,`CreateTicket` = '@CreateTicket@'
+    ,`FixLog` = '@fixLog@'
+    ,`LogOutput` = '@logOutput@'
+    ,`DateLastUPdated` = NOW()

@@ -71,7 +71,7 @@ Try {
 $logOutput += Get-DhcpEventLogs -GroupEvents Yes -LogDays 1 | Out-String
 
 
-"errors=$errorsOut|dhcpLeaseStatus=$dhcpLeaseStatus|conflictDetectionStatus=$conflictDetectionStatus|logOutput=$logOutput|fixLog=$fixLog"
+"errors=$errorsOut|dhcpLeaseStatus=$dhcpLeaseStatus|conflictDetectionStatus=$conflictDetectionStatus|createTicket=$createTicket|logOutput=$logOutput|fixLog=$fixLog"
 
 $logOutput = $null
 $fixLog = $null

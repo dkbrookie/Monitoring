@@ -11,6 +11,7 @@ VALUES (
     /*ComputerID*/'%ComputerID%'
     ,/*dhcpLeaseStatus*/'@dhcpLeaseStatus@'
     ,/*conflictDetectionStatus*/'@conflictDetectionStatus@'
+    ,/*CreateTicket*/'@CreateTicket@'
     ,/*fixLog*/'@fixLog@'
     ,/*logOutput*/'@logOutput@'
     ,/*dateLastUpdated*/NOW()

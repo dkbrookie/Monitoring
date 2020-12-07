@@ -586,7 +586,7 @@ If ($forestLevel -eq $dcOS) {
 ## Check Default Domain Admin Enabled ##
 ########################################
 Try {
-    $defaultAdmin = (Get-ADUser -Filter * | Where {$_.sid -match “-500”}).Enabled
+    $defaultAdmin = (Get-ADUser -Filter * | Where {$_.sid -match '-500'}).Enabled
     If ($defaultAdmin) {
         $defaultAdminStatus = 'Failed'
     } Else {

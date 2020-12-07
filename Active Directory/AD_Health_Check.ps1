@@ -461,7 +461,7 @@ If ($RWDCvalidity -eq $False) {
     ## Delete The Temp Object On The RWDC
     If ($cleanupTempObject) {
         $logOutput += "Deleting Temp Text File.`r`n"
-        Remove-Item $($scriptsUNCPathOnSourcingRWDC + "\" + $tempObjectName) -Force
+        Remove-Item $($scriptsUNCPathOnSourcingRWDC + "\" + $tempObjectName) -Force -EA 0
         $logOutput += "Temp Text File $tempObjectName Has Been Deleted On The Target RWDC!`r`n"
     }
 

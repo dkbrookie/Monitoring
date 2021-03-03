@@ -15,9 +15,9 @@ ForEach ($user in $users) {
     ## Check for the $launchPadName running process on the individual user console number level
     $launchPadRun = Get-Process -Name $launchPadExeName -EA 0 | Where-Object { $_.SI -eq $user.ID }
     If ($launchPadRun) {
-        Write-Output "Verified $launchPadName is running on $($user.Username)"
+        [array]$logOutput += "Verified $launchPadName is running on $($user.Username)"
     } Else {
-        Write-Output "$launchPadName is not running on $($user.Username), starting process"
+        [array]$logOutput += "$launchPadName is not running on $($user.Username), starting process"
         ## PSExec is the only tool that allows you to start a process on a specific user console number.
         ## Check to see if PSExec is downloaded, then download it if it's missing
         
@@ -42,3 +42,7 @@ ForEach ($user in $users) {
         $launchPadRun = $null
     }
 }
+
+## Format output to put one line of text per line out
+$logOutput -join "n"
+"logOutput=$logOutput"

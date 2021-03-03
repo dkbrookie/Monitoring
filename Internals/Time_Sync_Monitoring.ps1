@@ -1,5 +1,4 @@
-Workflow Get-VSystemTimeSynchronization
-{
+Function Get-VSystemTimeSynchronization {
     <#
     .SYNOPSIS
          Get configured NTP server (source) and date and time of the last time synchronization. Raise error when last time synchronization was a long time ago or when the NTP server (source) is wrong.
@@ -24,7 +23,7 @@ Workflow Get-VSystemTimeSynchronization
     .PARAMETER RequiredSourceName
         For example: @('0.pool.ntp.org', '1.pool.ntp.org', '2.pool.ntp.org', '3.pool.ntp.org')
 
-        If specified then the results is False when the current source is not one of the defined value.
+        If specIfied then the results is False when the current source is not one of the defined value.
 
     .PARAMETER RequiredSourceTypeConfiguredInRegistry
         Error will raise when the current source is not one of the sources configured in Windows Registry.
@@ -43,27 +42,27 @@ Workflow Get-VSystemTimeSynchronization
     .PARAMETER LastTimeSynchronizationMaximumNumberOfSeconds
         Maximum number of seconds of the last time synchronization.
 
-        If specified then the results is False when the last time synchronization was a long time ago then the specified number.
+        If specIfied then the results is False when the last time synchronization was a long time ago then the specIfied number.
 
     .PARAMETER CompareWithNTPServerName
         See help from: Test-VSystemTimeSynchronization
 
-    .PARAMETER CompareWithNTPServerMaximumTimeDifferenceSeconds
+    .PARAMETER CompareWithNTPServerMaximumTimeDIfferenceSeconds
         See help from: Test-VSystemTimeSynchronization
 
     .PARAMETER IgnoreError
         See help from: Test-VSystemTimeSynchronization
 
     .EXAMPLE
-        '    - Get date from the specified remote devices (servers)'
+        '    - Get date from the specIfied remote devices (servers)'
         '    - Return date and time of the last time synchronization'
-        '    - Raise error when the date and time of last synchronization is unknwon (unspecified)'
+        '    - Raise error when the date and time of last synchronization is unknwon (unspecIfied)'
         Get-VSystemTimeSynchronization `
             -ComputerName hyperv0, hyperv1, hyperv2 `
             -Verbose
 
     .EXAMPLE
-        'Raise error when the date and time of last synchronization was a long time ago (more then the specified number of seconds)'
+        'Raise error when the date and time of last synchronization was a long time ago (more then the specIfied number of seconds)'
         Get-VSystemTimeSynchronization `
             -LastTimeSynchronizationMaximumNumberOfSeconds 3600 -Verbose
 
@@ -87,15 +86,15 @@ Workflow Get-VSystemTimeSynchronization
             -Verbose
 
     .EXAMPLE
-        '    - Get date from the specified remote devices (servers)'
-        '    - Raise error when the time difference between the remote device and defined NTP server it too high'
-        '    - NTP server is defined by IP address (IPv6) but of course it could be specified by DNS name'
+        '    - Get date from the specIfied remote devices (servers)'
+        '    - Raise error when the time dIfference between the remote device and defined NTP server it too high'
+        '    - NTP server is defined by IP address (IPv6) but of course it could be specIfied by DNS name'
         '    - Ignore when it is not possible to connect the NTP server (remote device may have may have closed firewall)'
         Get-VSystemTimeSynchronization `
             -ComputerName hyperv0, hyperv1, hyperv2 `
             -RequiredSourceTypeNotLocal:$true `
             -CompareWithNTPServerName 'fd12:3456::0045' `
-            -CompareWithNTPServerMaximumTimeDifferenceSeconds 10 `
+            -CompareWithNTPServerMaximumTimeDIfferenceSeconds 10 `
             -IgnoreError CompareWithNTPServerNoConnection `
             -Verbose
 
@@ -175,7 +174,7 @@ Workflow Get-VSystemTimeSynchronization
             # Position = ,
             # ParameterSetName = ''
         )]
-        [int]$CompareWithNTPServerMaximumTimeDifferenceSeconds = 5,
+        [int]$CompareWithNTPServerMaximumTimeDIfferenceSeconds = 5,
 
         [Parameter(
             Mandatory = $false
@@ -187,7 +186,9 @@ Workflow Get-VSystemTimeSynchronization
         [string[]]$IgnoreError
     )
 
-    # Configurations
+    ####################
+    ## Configurations ##
+    ####################
     $ErrorActionPreference = 'Stop'
     $ProgressPreference = 'SilentlyContinue'
 
@@ -200,200 +201,128 @@ Workflow Get-VSystemTimeSynchronization
         Exception: The variable '$__PSUsingVariable_SomeVar' cannot be retrieved because it has not been set.
     #>
 
-    if (!$RequiredSourceName)         { $RequiredSourceName        = @() }
-    if (!$CompareWithNTPServerName)   { $CompareWithNTPServerName  = '' }
+    If (!$RequiredSourceName)         { $RequiredSourceName        = @() }
+    If (!$CompareWithNTPServerName)   { $CompareWithNTPServerName  = '' }
 
-    try
-    {
+    Try {
         InlineScript
         {
-            <#
-            Initializations
-            #>
-
-            # Configurations
+            ## Configurations
             $ErrorActionPreference = 'Stop'
-            if ($PSBoundParameters['Debug']) { $DebugPreference = 'Continue' }
+            If ($PSBoundParameters['Debug']) { $DebugPreference = 'Continue' }
             Set-PSDebug -Strict
             Set-StrictMode -Version Latest
 
-
-
-            <#
-            Variables
-            #>
-
+            ## Variables
             $outputItem = [PsCustomObject]@{
                 DateTimeUtc                                = $null
-
                 ComputerNameBasic                          = $env:COMPUTERNAME.ToLower()
                 ComputerNameNetBIOS                        = $env:COMPUTERNAME
                 ComputerNameFQDN                           = $null
-
-                # For example: @('0.pool.ntp.org', '1.pool.ntp.org', '2.pool.ntp.org', '3.pool.ntp.org')
+                ## For example: @('0.pool.ntp.org', '1.pool.ntp.org', '2.pool.ntp.org', '3.pool.ntp.org')
                 ConfiguredNTPServerName                    = $null
-
-                # For example: '0.pool.ntp.org,0x1 1.pool.ntp.org,0x1 2.pool.ntp.org,0x1 3.pool.ntp.org,0x1'
+                ## For example: '0.pool.ntp.org,0x1 1.pool.ntp.org,0x1 2.pool.ntp.org,0x1 3.pool.ntp.org,0x1'
                 ConfiguredNTPServerNameRaw                 = $null
-
-                # True if defined by policy
+                ## True If defined by policy
                 ConfiguredNTPServerByPolicy                = $null
-
                 SourceName                                 = $null
                 SourceNameRaw                              = $null
-
                 LastTimeSynchronizationDateTime            = $null
                 LastTimeSynchronizationElapsedSeconds      = $null
-
-                ComparisonNTPServerName                    = $(if ($Using:CompareWithNTPServerName) { $Using:CompareWithNTPServerName } else { $null })
-                ComparisonNTPServerTimeDifferenceSeconds   = $null
-
-                # Null when no source is required, True / False when it is required
+                ComparisonNTPServerName                    = $(If ($Using:CompareWithNTPServerName) { $Using:CompareWithNTPServerName } Else { $null })
+                ComparisonNTPServerTimeDIfferenceSeconds   = $null
+                ## Null when no source is required, True / False when it is required
                 StatusRequiredSourceName                   = $null
-
-                # Null when no type is required, True / False when it is required
+                ## Null when no type is required, True / False when it is required
                 StatusRequiredSourceType                   = $null
-
-                # True when date is not unknown, False when it is unknown
+                ## True when date is not unknown, False when it is unknown
                 StatusDateTime                             = $null
-
-                # Null when maximum of seconds was not specified, True / False when it was specified
+                ## Null when maximum of seconds was not specIfied, True / False when it was specIfied
                 StatusLastTimeSynchronization              = $null
-
-                # Null when no comparison or when not connection and error should be ignored, True / False when number of seconds was obtained
+                ## Null when no comparison or when not connection and error should be ignored, True / False when number of seconds was obtained
                 StatusComparisonNTPServer                  = $null
-
                 Status                                     = $null
                 StatusEvents                               = @()
                 Error                                      = $null
                 ErrorEvents                                = @()
             }
 
-
-
-            <#
-            Start W32Time service
-            #>
-
-            try
-            {
-                if ((Get-Service -Name W32Time).Status -ne 'Running')
-                {
+            ## Start W32Time service
+            Try {
+                If ((Get-Service -Name W32Time).Status -ne 'Running') {
                     Write-Verbose -Message '[Get] [Start service] [Verbose] Start service: W32Time (Windows Time)'
                     Start-Service -Name W32Time
                 }
-            }
-            catch
-            {
+            } Catch {
                 $outputItem.ErrorEvents += ('[Get] [Start service] [Exception] {0}' -f $_.Exception.Message)
             }
 
 
 
-            <#
-            Gather data
-            #>
-
-            try
-            {
-                # W32tm
+            ## Gather data
+            Try {
+                ## W32tm
                 $w32tmOutput = & 'w32tm' '/query', '/status'
 
-                # FQDN
+                ## FQDN
                 $ipGlobalProperties = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties()
-                if ($ipGlobalProperties.DomainName)
-                {
+                If ($ipGlobalProperties.DomainName) {
                     $outputItem.ComputerNameFQDN = '{0}.{1}' -f
                         $ipGlobalProperties.HostName, $ipGlobalProperties.DomainName
-                }
-                else
-                {
+                } Else {
                     $outputItem.ComputerNameFQDN = $null
                 }
-            }
-            catch
-            {
+            } Catch {
                 $outputItem.ErrorEvents += ('[Get] [Gather data] [Exception] {0}' -f $_.Exception.Message)
             }
 
-
-
-            <#
-            Configured NTP Server
-            #>
-
-            try
-            {
-                if (Test-Path -Path HKLM:\SOFTWARE\Policies\Microsoft\W32Time\Parameters -PathType Container)
-                {
+            ## Configured NTP Server
+            Try {
+                If (Test-Path -Path HKLM:\SOFTWARE\Policies\Microsoft\W32Time\Parameters -PathType Container) {
                     $configuredNtpServerNameRegistryPolicy = Get-ItemProperty `
                         -Path HKLM:\SOFTWARE\Policies\Microsoft\W32Time\Parameters `
                         -Name 'NtpServer' -ErrorAction SilentlyContinue |
                         Select-Object -ExpandProperty NtpServer
-                }
-                else
-                {
+                } Else {
                     $configuredNtpServerNameRegistryPolicy = $null
                 }
 
-                if ($configuredNtpServerNameRegistryPolicy)
-                {
+                If ($configuredNtpServerNameRegistryPolicy) {
                     $outputItem.ConfiguredNTPServerByPolicy = $true
 
-                    # Policy override
+                    ## Policy override
                     $outputItem.ConfiguredNTPServerNameRaw = $configuredNtpServerNameRegistryPolicy.Trim()
-                }
-                else
-                {
+                } Else {
                     $outputItem.ConfiguredNTPServerByPolicy = $false
 
-                    # Exception if not exists
+                    ## Exception If not exists
                     $outputItem.ConfiguredNTPServerNameRaw = ((Get-ItemProperty `
                         -Path HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters -Name 'NtpServer').NtpServer).Trim()
                 }
 
-                if ($outputItem.ConfiguredNTPServerNameRaw)
-                {
+                If ($outputItem.ConfiguredNTPServerNameRaw) {
                     $outputItem.ConfiguredNTPServerName = $outputItem.ConfiguredNTPServerNameRaw.Split(' ') -replace ',0x.*'
                 }
-            }
-            catch
-            {
+            } Catch {
                 $outputItem.ErrorEvents += ('[Get] [Configured NTP Server] [Exception] {0}' -f $_.Exception.Message)
             }
 
-
-
-            <#
-            Source
-            #>
-
-            try
-            {
+            ## Source
+            Try {
                 $sourceNameRaw = $w32tmOutput | Select-String -Pattern '^Source:'
 
-                if ($sourceNameRaw)
-                {
+                If ($sourceNameRaw) {
                     $sourceNameRaw =
                         $sourceNameRaw.ToString().Replace('Source:', '').Trim()
 
                     $outputItem.SourceNameRaw = $sourceNameRaw
                     $outputItem.SourceName = $sourceNameRaw -replace ',0x.*'
 
-
-
-                    <#
-                    Source: Test: Name
-                    #>
-
-                    if ($Using:RequiredSourceName)
-                    {
-                        if ($Using:RequiredSourceName -contains $outputItem.SourceName)
-                        {
+                    ## Source: Test: Name
+                    If ($Using:RequiredSourceName) {
+                        If ($Using:RequiredSourceName -contains $outputItem.SourceName) {
                             $outputItem.StatusRequiredSourceName = $true
-                        }
-                        else
-                        {
+                        } Else {
                             $outputItem.StatusRequiredSourceName = $false
 
                             $outputItem.ErrorEvents += ('[Get] [Source name] [Error] Current: {0}; Required: {1}' -f
@@ -401,203 +330,130 @@ Workflow Get-VSystemTimeSynchronization
                         }
                     }
 
-
-
-                    <#
-                    Source: Test: Type
-                    #>
-
-                    if ($Using:RequiredSourceTypeConfiguredInRegistry -or $Using:RequiredSourceTypeNotLocal -or $Using:RequiredSourceTypeNotByHost)
-                    {
+                    ## Source: Test: Type
+                    If ($Using:RequiredSourceTypeConfiguredInRegistry -or $Using:RequiredSourceTypeNotLocal -or $Using:RequiredSourceTypeNotByHost) {
                         $outputItem.StatusRequiredSourceType = $true
 
-                        if (($Using:RequiredSourceTypeConfiguredInRegistry -or $Using:RequiredSourceTypeNotLocal) -and
+                        If (($Using:RequiredSourceTypeConfiguredInRegistry -or $Using:RequiredSourceTypeNotLocal) -and
                             ($outputItem.SourceNameRaw  -eq 'Local CMOS Clock' -or
-                            $outputItem.SourceNameRaw  -eq 'Free-running System Clock'))
-                        {
+                            $outputItem.SourceNameRaw  -eq 'Free-running System Clock')) {
                             $outputItem.StatusRequiredSourceType = $false
 
                             $outputItem.ErrorEvents += ('[Get] [Source type] [Error] Time synchronization source: Local')
                         }
 
-                        if (($Using:RequiredSourceTypeConfiguredInRegistry -or $Using:RequiredSourceTypeNotByHost) -and
-                            $outputItem.SourceNameRaw  -eq 'VM IC Time Synchronization Provider')
-                        {
+                        If (($Using:RequiredSourceTypeConfiguredInRegistry -or $Using:RequiredSourceTypeNotByHost) -and
+                            $outputItem.SourceNameRaw  -eq 'VM IC Time Synchronization Provider') {
                             $outputItem.StatusRequiredSourceType = $false
 
                             $outputItem.ErrorEvents += ('[Get] [Source type] [Error] Time synchronization source: Hyper-V')
                         }
 
-                        if ($Using:RequiredSourceTypeConfiguredInRegistry -and
-                            $outputItem.ConfiguredNTPServerName -notcontains $outputItem.SourceName)
-                        {
+                        If ($Using:RequiredSourceTypeConfiguredInRegistry -and
+                            $outputItem.ConfiguredNTPServerName -notcontains $outputItem.SourceName) {
                             $outputItem.StatusRequiredSourceType = $false
-
                             $outputItem.ErrorEvents += ('[Get] [Source type] [Error] Not equal to one of the NTP servers that are define in Windows Registry')
                         }
                     }
-                }
-                else
-                {
+                } Else {
                     $outputItem.ErrorEvents += '[Get] [Source] [Error] Data from w32tm was not obtained'
                 }
-            }
-            catch
-            {
+            } Catch {
                 $outputItem.ErrorEvents += ('[Get] [Source] [Exception] {0}' -f $_.Exception.Message)
             }
 
-
-
-            <#
-            Last time synchronization
-            #>
-
-            try
-            {
+            ## Last time synchronization
+            Try {
                 $lastTimeSynchronizationDateTimeRaw = $w32tmOutput |
                     Select-String -Pattern '^Last Successful Sync Time:'
 
                 $outputItem.StatusDateTime = $false
 
-                if ($lastTimeSynchronizationDateTimeRaw)
-                {
+                If ($lastTimeSynchronizationDateTimeRaw) {
                     $lastTimeSynchronizationDateTimeRaw =
                         $lastTimeSynchronizationDateTimeRaw.ToString().Replace('Last Successful Sync Time:', '').Trim()
 
-
-
-                    <#
-                    Last time synchronization: Test: Date and time
-                    #>
-
-                    if ($lastTimeSynchronizationDateTimeRaw -eq 'unspecified')
-                    {
+                    ## Last time synchronization: Test: Date and time
+                    If ($lastTimeSynchronizationDateTimeRaw -eq 'unspecIfied') {
                         $outputItem.ErrorEvents += '[Last time synchronization] [Error] Date and time: Unknown'
-                    }
-                    else
-                    {
+                    } Else {
                         $outputItem.LastTimeSynchronizationDateTime = [DateTime]$lastTimeSynchronizationDateTimeRaw
                         $outputItem.LastTimeSynchronizationElapsedSeconds = [int]((Get-Date) - $outputItem.LastTimeSynchronizationDateTime).TotalSeconds
 
                         $outputItem.StatusDateTime = $true
 
-
-
-                        <#
-                        Last time synchronization: Test: Maximum number of seconds
-                        #>
-
-                        if ($Using:LastTimeSynchronizationMaximumNumberOfSeconds -gt 0)
-                        {
-                            if ($outputItem.LastTimeSynchronizationElapsedSeconds -eq $null -or
+                        ## Last time synchronization: Test: Maximum number of seconds
+                        If ($Using:LastTimeSynchronizationMaximumNumberOfSeconds -gt 0) {
+                            If ($outputItem.LastTimeSynchronizationElapsedSeconds -eq $null -or
                                 $outputItem.LastTimeSynchronizationElapsedSeconds -lt 0 -or
-                                $outputItem.LastTimeSynchronizationElapsedSeconds -gt $Using:LastTimeSynchronizationMaximumNumberOfSeconds)
-                            {
+                                $outputItem.LastTimeSynchronizationElapsedSeconds -gt $Using:LastTimeSynchronizationMaximumNumberOfSeconds) {
                                 $outputItem.StatusLastTimeSynchronization = $false
 
                                 $outputItem.ErrorEvents += ('[Get] [Last time synchronization] [Error] Elapsed: {0} seconds; Defined maximum: {1} seconds' -f
                                     $outputItem.LastTimeSynchronizationElapsedSeconds, $Using:LastTimeSynchronizationMaximumNumberOfSeconds)
-                            }
-                            else
-                            {
+                            } Else {
                                 $outputItem.StatusLastTimeSynchronization = $true
                             }
                         }
                     }
-                }
-                else
-                {
+                } Else {
                     $outputItem.ErrorEvents += '[Get] [Last time synchronization] [Error] Data from w32tm was not obtained'
                 }
-            }
-            catch
-            {
+            } Catch {
                 $outputItem.ErrorEvents += ('[Get] [Last time synchronization] [Exception] {0}' -f $_.Exception.Message)
             }
 
-
-
-            <#
-            Compare time with defined NTP server
-            #>
-
-            if ($Using:CompareWithNTPServerName)
-            {
+            ## Compare time with defined NTP server
+            If ($Using:CompareWithNTPServerName) {
                 $outputItem.StatusComparisonNTPServer = $false
 
-                try
-                {
+                Try {
                     $w32tmOutput = & 'w32tm' '/stripchart',
                         ('/computer:{0}' -f $Using:CompareWithNTPServerName),
                         '/dataonly', '/samples:1' |
                         Select-Object -Last 1
 
-                    if ($w32tmOutput  -match '\.\d+s$')
-                    {
-                        $outputItem.ComparisonNTPServerTimeDifferenceSeconds = [double]($w32tmOutput -replace '.* |s$')
+                    If ($w32tmOutput  -match '\.\d+s$') {
+                        $outputItem.ComparisonNTPServerTimeDIfferenceSeconds = [double]($w32tmOutput -replace '.* |s$')
 
-
-
-                        <#
-                        Compare time with defined NTP server: Test
-                        #>
-
-                        if ($outputItem.ComparisonNTPServerTimeDifferenceSeconds -eq $null -or
-                            $outputItem.ComparisonNTPServerTimeDifferenceSeconds -lt ($Using:CompareWithNTPServerMaximumTimeDifferenceSeconds * -1) -or
-                            $outputItem.ComparisonNTPServerTimeDifferenceSeconds -gt $Using:CompareWithNTPServerMaximumTimeDifferenceSeconds)
-                        {
+                        ## Compare time with defined NTP server: Test
+                        If ($outputItem.ComparisonNTPServerTimeDIfferenceSeconds -eq $null -or
+                            $outputItem.ComparisonNTPServerTimeDIfferenceSeconds -lt ($Using:CompareWithNTPServerMaximumTimeDIfferenceSeconds * -1) -or
+                            $outputItem.ComparisonNTPServerTimeDIfferenceSeconds -gt $Using:CompareWithNTPServerMaximumTimeDIfferenceSeconds) {
                             $outputItem.ErrorEvents += ('[Get] [Compare with NTP] [Error] Elapsed: {0} seconds; Defined maximum: {1} seconds' -f
-                                $outputItem.ComparisonNTPServerTimeDifferenceSeconds, $Using:CompareWithNTPServerMaximumTimeDifferenceSeconds)
-                        }
-                        else
-                        {
+                                $outputItem.ComparisonNTPServerTimeDIfferenceSeconds, $Using:CompareWithNTPServerMaximumTimeDIfferenceSeconds)
+                        } Else {
                             $outputItem.StatusComparisonNTPServer = $true
                         }
-                    }
-                    else
-                    {
+                    } Else {
                         $message = ('[Get] [Compare with NTP]: [Error] No connection')
 
-                        if ($Using:IgnoreError -contains 'CompareWithNTPServerNoConnection')
-                        {
+                        If ($Using:IgnoreError -contains 'CompareWithNTPServerNoConnection') {
                             $outputItem.StatusComparisonNTPServer = $true
 
                             $outputItem.StatusEvents += $message
-                        }
-                        else
-                        {
+                        } Else {
                             $outputItem.ErrorEvents += $message
                         }
                     }
-                }
-                catch
-                {
+                } Catch {
                     $outputItem.ErrorEvents += ('[Get] [Compare with NTP]: Exception: {0}' -f $_.Exception.Message)
                 }
             }
 
-
-
-            <#
-            Return
-            #>
-
-            if ($outputItem.ErrorEvents)
-            {
+            ## Return
+            If ($outputItem.ErrorEvents) {
                 Write-Warning -Message ('[Get] Results: False: {0}' -f ($outputItem.ErrorEvents -join "; "))
 
                 $outputItem.Status  = $false
                 $outputItem.Error   = $true
-            }
-            else
-            {
+            } Else {
                 $outputItem.Status  = $true
                 $outputItem.Error   = $false
             }
 
             $outputItem.DateTimeUtc = (Get-Date).ToUniversalTime()
-            $outputItem.SourceName
+            $outputItem
         } -PSComputerName $ComputerName `
             -PSPersist:$false `
             -PSError $inlineScriptErrorParallelItems
@@ -605,61 +461,38 @@ Workflow Get-VSystemTimeSynchronization
 
 
 
-    <#
-    Remoting: Error handling
-    #>
 
-    <#
-    Single device in InlineScript -PSComputerName
-    #>
+    ## Remoting: Error handling
 
-    catch [System.Management.Automation.Remoting.PSRemotingTransportException]
-    {
+    ## Single device in InlineScript -PSComputerName
+    Catch [System.Management.Automation.Remoting.PSRemotingTransportException] {
         $inlineScriptErrorItems = $_
     }
 
+    ## Multiple devices in InlineScript -PSComputerName
+    If ($inlineScriptErrorParallelItems) { $inlineScriptErrorItems = $inlineScriptErrorParallelItems }
 
-
-    <#
-    Multiple devices in InlineScript -PSComputerName
-    #>
-
-    if ($inlineScriptErrorParallelItems) { $inlineScriptErrorItems = $inlineScriptErrorParallelItems }
-
-
-
-    <#
-    Error handling
-    #>
-
-    foreach ($inlineScriptErrorFullItem in $inlineScriptErrorItems)
-    {
-        # Exceptions from paralled has "Exception" property
-        if ($inlineScriptErrorFullItem.PSObject.Properties.Name -eq 'Exception')
-        {
+    ## Error handling
+    ForEach ($inlineScriptErrorFullItem in $inlineScriptErrorItems) {
+        ## Exceptions from paralled has "Exception" property
+        If ($inlineScriptErrorFullItem.PSObject.Properties.Name -eq 'Exception') {
             $inlineScriptErrorItem = $inlineScriptErrorFullItem.Exception
-        }
-        else
-        {
+        } Else {
             $inlineScriptErrorItem = $inlineScriptErrorFullItem
         }
 
-        # Ignore defined errors
-        if ($IgnoreError -contains 'WrongComputerName' -and
+        ## Ignore defined errors
+        If ($IgnoreError -contains 'WrongComputerName' -and
             ($inlineScriptErrorItem.ErrorRecord.CategoryInfo | Select-Object -First 1 -ExpandProperty Category) -eq 'ResourceUnavailable' -and
-            $inlineScriptErrorItem.TransportMessage -like 'The network path was not found.*')
-        {
+            $inlineScriptErrorItem.TransportMessage -like 'The network path was not found.*') {
             Write-Warning -Message 'Device does not exists (not in DNS).'
-        }
-        elseif ($IgnoreError -contains 'DeviceIsNotAccessible' -and
+        } ElseIf ($IgnoreError -contains 'DeviceIsNotAccessible' -and
             ($inlineScriptErrorItem.ErrorRecord.CategoryInfo | Select-Object -First 1 -ExpandProperty Category) -eq 'ResourceUnavailable' -and
-            $inlineScriptErrorItem.TransportMessage -like '*Verify that the specified computer name is valid, that the computer is accessible over the network*')
+            $inlineScriptErrorItem.TransportMessage -like '*VerIfy that the specIfied computer name is valid, that the computer is accessible over the network*')
         {
             Write-Warning -Message 'Device exists (defined in DNS) but it is not reachable (not running, FW issue, etc.).'
-        }
-        else
-        {
-            # Terminating error
+        } Else {
+            ## Terminating error
             Write-Error -Exception $inlineScriptErrorItem.ErrorRecord.Exception
         }
     }

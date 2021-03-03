@@ -1,5 +1,3 @@
-Clear-Host
-
 ## Constants
 $runningVMs = Get-VM | Where-Object { $_.State -eq 'Running' }
 $allVMs = Get-VM
@@ -43,12 +41,13 @@ ForEach ($vmSummaryInformation in [array] $vmSummaryInformationArray) {
 
 ForEach ($VM in $outputArray) {
     If ($VM.'Integration Services State' -contains "Version Mismatch") {
-        $isDetails += "$($VM.'VM Name') Integration Services state is: $($VM.'Integration Services State')`r`n"
+        [array]$logOutput += "Integration Services Status: Failed"
+        [array]$logOutput += "$($VM.'VM Name') Integration Services state is: $($VM.'Integration Services State')"
         $isStatus = 'Failed'
     }
 }
 If (!$isDetails) {
-    $isDetails = 'Healthy'
+    [array]$logOutput += 'Integration Services Status: Healthy'
     $isStatus = 'Success'
 }
 
@@ -58,23 +57,28 @@ If (!$isDetails) {
 #########################
 <#
 .Description
-You might notice a decrease in performance when your NUMA spanning incorrect, not just in assigned memory but 
+You might notice a decrease in performance when your NUMA spanning is incorrect, not just in assigned memory but 
 a general performance degradation of up to 80%. Check these links for more details: 
 https://www.itprotoday.com/server-virtualization/how-numa-spanning-affects-hyper-v-memory-allocation
 https://docs.pexip.com/server_design/hyperv_numa_affinity.htm
 #>
-ForEach ($vm in $runningVMs) {
-    $getvCPUCount = Get-VM -Name $vm.Name | Select-Object Name,NumaAligned,ProcessorCount,NumaNodesCount,NumaSocketCount
-    $cpu = Get-WmiObject Win32_Processor
-    $totalCPU = $cpu.numberoflogicalprocessors[0]*$cpu.count
-    If ($getvCPUCount.numaAligned -eq $False) {
-        $vcpuDetails += "NUMA not aligned for; $($vm.Name). vCPU assigned: $($getvCPUCount.ProcessorCount) of $totalCPU available`r`n"
-        $vcpuStatus = 'Failed'
+If ($runningVMs) {
+    ForEach ($vm in $runningVMs) {
+        $getvCPUCount = Get-VM -Name $vm.Name | Select-Object Name,NumaAligned,ProcessorCount,NumaNodesCount,NumaSocketCount
+        $cpu = Get-WmiObject Win32_Processor
+        $totalCPU = $cpu.numberoflogicalprocessors[0]*$cpu.count
+        If ($getvCPUCount.numaAligned -eq $False) {
+            [array]$numa += "NUMA Spanning not aligned for the VM: $($vm.Name). vCPU assigned: $($getvCPUCount.ProcessorCount) of $totalCPU available"
+            $vcpuStatus = 'Failed'
+        }
     }
 }
-If (!$vCPUOutput) {
-    $vcpuDetails = 'Healthy'
+If (!$vcpuStatus) {
+    [array]$logOutput += 'NUMA Spanning Status: Healthy'
     $vcpuStatus = 'Success'
+} Else {
+    [array]$logOutput += "NUMA Spanning Status: Failed"
+    [array]$logOutput += [array]$numa
 }
 
 
@@ -89,12 +93,14 @@ time, and can cause massive uncontrollable disk space usage growth. For this rea
 should not exist unless it is an active test, temporary project step, or dev scenario.
 #>
 $snapshots = Get-VM | Get-VMSnapshot | Where-Object {$_.CreationTime -lt (Get-Date).AddDays(-30) }
-ForEach ($snapshot in $snapshots) {
-    $snapshotDetail += "A snapshot has been found for VM $($snapshot.vmname). The snapshot was created on $($snapshot.CreationTime)`r`n"
+If ($snapshots) {
+    [array]$logOutput += "Snapshot Status: Failed"
     $snapshotStatus = 'Failed'
-}
-If (!$snapshotDetail) {
-    $snapshotDetail = 'Healthy'
+    ForEach ($snapshot in $snapshots) {
+        [array]$logOutput += "A snapshot has been found for VM $($snapshot.vmname). The snapshot was created on $($snapshot.CreationTime)"
+    }
+} Else {
+    [array]$logOutput += 'Snapshot Status: Healthy'
     $snapshotStatus = 'Success'
 }
 
@@ -111,15 +117,20 @@ down the VM without deleting the snapshots will merge the changes to ensure the 
 controlled. To merge manually, check this article: https://www.nakivo.com/blog/merge-hyper-v-snapshots-step-step-guide/
 #>
 $VHDs = Get-VM | Get-VMHardDiskDrive
-ForEach ($VHD in $VHDs){
-    If ($vhd.path -match 'avhd') {
-        $avhdxDetails += "$($VHD.VMName) is running on AVHD: $($VHD.path)`r`n"
-        $avhdxStatus = 'Failed'
+If ($VHDs) {    
+    ForEach ($VHD in $VHDs){
+        If ($vhd.path -match 'avhd') {
+            [array]$avhdxOut += "$($VHD.VMName) is running on AVHD: $($VHD.path)"
+            $avhdxStatus = 'Failed'
+        }
     }
 }
-If (!$avhdxDetails) {
-    $avhdxDetails = 'Healthy'
+If (!$avhdxStatus) {
+    [array]$logOutput += 'AVHDX Status: Healthy'
     $avhdxStatus = 'Success'
+} Else {
+    [array]$logOutput += "AVHDX Status: Failed"
+    [array]$logOutput += [array]$avhdxOut
 }
 
 ##################################
@@ -131,18 +142,21 @@ Often, hosts will not have the same identical CPU in a cluster, so without check
 compatibility, this will prevent the VM from moving to other host resources without an identical CPU.
 This can break the intended purpose of HA, so the recommendation is to always have this enabled.
 #>
-$cpuCompatVMs = 'VMs with CPU Compatibility disabled: '
-ForEach ($vm in $runningVMs) {
-    If (!(Get-VMProcessor -VMName $($vm.Name)).CompatibilityForMigrationEnabled) {
-        $cpuCompatStatus = 'Failed'
-        $cpuCompatVMs += "$($vm.Name)`r`n"
+If ($runningVMs) {
+    ForEach ($vm in $runningVMs) {
+        If (!(Get-VMProcessor -VMName $($vm.Name)).CompatibilityForMigrationEnabled) {
+            $vm.Name
+            [array]$vmCompat += "CPU Compatibility Disabled: $($vm.Name)"
+            $cpuCompatStatus = 'Failed'
+        }
     }
-}
+} 
+
 If (!$cpuCompatStatus) {
-    $cpuCompatStatus = 'Success'
-}
-If ($cpuCompatVMs -eq "VMs with CPU Compatibility disabled:`r`n") {
-    $cpuCompatVMs = 'None'
+    [array]$logOutput += 'CPU Compatibility Status: Success'
+} Else {
+    [array]$logOutput += 'CPU Compatibility Status: Failed'
+    [array]$logOutput += [array]$vmCompat
 }
 
 
@@ -152,19 +166,23 @@ If ($cpuCompatVMs -eq "VMs with CPU Compatibility disabled:`r`n") {
 ForEach ($vm in $allVMs) {
     $vmLastUse = (Get-Item -Path $vm.HardDrives[0].Path).LastWriteTime
     If ($vmLastUse -lt ((Get-Date).AddDays(-90))) {
-        $unusedVMs += "$($vm.Name)`r`n"
+        [array]$unusedVMs += "Unused VM Name: $($vm.Name)"
         $unusedVMStatus = 'Failed'
     }
 }
 If (!$unusedVMStatus) {
+    [array]$logOutput += "Unused VM Status: Healthy"
     $unusedVMStatus = 'Success'
-    $unusedVMs = 'None'
+} Else {
+    [array]$logOutput += "Unused VM Status: Failed"
+    [array]$logOutput += $unusedVMs
 }
 
 
 ####################################
 ## Detect if host is in a cluster ##
 ####################################
+## In dev, may use later
 <#
 If ((Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V).State -eq 'Enabled') {
     $hypervRole = $True
@@ -179,18 +197,17 @@ If ((Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V).State -e
 }
 #>
 
-
-"isStatus=$isStatus|isDetails=$isDetails|vcpuStatus=$vcpuStatus|vcpuDetails=$vcpuDetails|snapshotStatus=$snapshotStatus|snapshotDetail=$snapshotDetail|avhdxStatus=$avhdxStatus|avhdxDetails=$avhdxDetails|cpuCompatStatus=$cpuCompatStatus|cpuCompatVMs=$cpuCompatVMs|unusedVMStatus=$unusedVMStatus|unusedVMs=$unusedVMs"
+$logOutput = $logOutput -join "`n"
+"isStatus=$isStatus|vcpuStatus=$vcpuStatus|snapshotStatus=$snapshotStatus|avhdxStatus=$avhdxStatus|cpuCompatStatus=$cpuCompatStatus|unusedVMStatus=$unusedVMStatus|logOutput=$logOutput"
 
 $isStatus = $null
-$isDetails = $null
 $vcpuStatus = $null
-$vcpuDetails = $null
 $snapshotStatus = $null
-$snapshotDetail = $null
 $avhdxStatus = $null
-$avhdxDetails = $null
 $cpuCompatStatus = $null
 $cpuCompatVMs = $null
 $unusedVMStatus = $null
+$logOutput = $null
+$numa = $null
+$vmCompat = $null
 $unusedVMs = $null

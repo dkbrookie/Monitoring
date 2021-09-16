@@ -1,2 +1,7 @@
 1) Time synced to external source
-2) 
+2) No VMs running on AVHDX
+3) CPU Compatibility checkbox checked on all VMs
+4) NUMA status check
+5) Make sure no snapshots older than xx
+6) Check for unused VMs (haven't been powered on)
+7) Quorum check if cluster 

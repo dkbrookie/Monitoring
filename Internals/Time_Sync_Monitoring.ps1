@@ -1,4 +1,4 @@
-Function Get-VSystemTimeSynchronization {
+Workflow Get-VSystemTimeSynchronization {
     <#
     .SYNOPSIS
          Get configured NTP server (source) and date and time of the last time synchronization. Raise error when last time synchronization was a long time ago or when the NTP server (source) is wrong.
@@ -420,7 +420,7 @@ Function Get-VSystemTimeSynchronization {
                         If ($outputItem.ComparisonNTPServerTimeDIfferenceSeconds -eq $null -or
                             $outputItem.ComparisonNTPServerTimeDIfferenceSeconds -lt ($Using:CompareWithNTPServerMaximumTimeDIfferenceSeconds * -1) -or
                             $outputItem.ComparisonNTPServerTimeDIfferenceSeconds -gt $Using:CompareWithNTPServerMaximumTimeDIfferenceSeconds) {
-                            $outputItem.ErrorEvents += ('[Get] [Compare with NTP] [Error] Elapsed: {0} seconds; Defined maximum: {1} seconds' -f
+                                $outputItem.ErrorEvents += ('[Get] [Compare with NTP] [Error] Elapsed: {0} seconds; Defined maximum: {1} seconds' -f
                                 $outputItem.ComparisonNTPServerTimeDIfferenceSeconds, $Using:CompareWithNTPServerMaximumTimeDIfferenceSeconds)
                         } Else {
                             $outputItem.StatusComparisonNTPServer = $true

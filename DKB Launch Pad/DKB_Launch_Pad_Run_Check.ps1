@@ -13,7 +13,7 @@ $users = ((quser) -replace '^>', '') -replace '\s{2,}', ',' | ConvertFrom-Csv
 ## Check each user to see if $launchPadName is running on every user session (needed for RDP servers)
 ForEach ($user in $users) {
     ## Check for the $launchPadName running process on the individual user console number level
-    $launchPadRun = Get-Process -Name $launchPadExeName -EA 0 | Where-Object { $_.SI -eq $user.ID }
+    $launchPadRun = Get-Process -Name $launchPadExeName -EA 0 | Where-Object { $_.SessionId -eq $user.ID }
     If ($launchPadRun) {
         [array]$logOutput += "Verified $launchPadName is running on $($user.Username)"
     } Else {
@@ -23,7 +23,7 @@ ForEach ($user in $users) {
         
         ## Create the PSExec dir if it doens't exist
         If (!(Test-Path $psexecDir -PathType Container)) {
-            New-Item -Path $psexecDir -ItemType Directory | Out-Null
+            New-Item -Path $psexecDir -ItemType Directory | Out-Null`
         }
         If (!(Test-Path $psexecExe -PathType Leaf)) {
             ## Download PSExec zip

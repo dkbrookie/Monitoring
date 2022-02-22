@@ -34,8 +34,10 @@
 - Hidden Windows Updates: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer', "SettingsPageVisibility" REG_SZ with a value of "hide:windowsupdate"
 - Max Powershell version per OS
 ### Hardware
-- Verify no missing drivers, attempt Windows driver update to remediate: Get-WmiObject Win32_PNPEntity -EA 0 | Where-Object{$_.Availability -eq 11 -or $_.Availability -eq 12}
-- Verify hardware devices in Error, Degraded, or Unknown states: Get-PnpDevice -PresentOnly -Status ERROR,DEGRADED,UNKNOWN -EA 0
+- Verify no missing drivers, attempt Windows driver update to remediate
+```Get-WmiObject Win32_PNPEntity -EA 0 | Where-Object{$_.Availability -eq 11 -or $_.Availability -eq 12}```
+- Verify hardware devices in Error, Degraded, or Unknown states
+```Get-PnpDevice -PresentOnly -Status ERROR,DEGRADED,UNKNOWN -EA 0```
 
 
 # Best Practice Checks

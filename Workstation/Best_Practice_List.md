@@ -43,6 +43,7 @@
 - Block user extension installation for Chrome, Firefox, and Edge
   - <https://chromeenterprise.google/policies/#ExtensionInstallBlocklist>. 
     >"A blocklist value of '*' means all extensions are blocked unless they are explicitly listed in the allowlist"
+  - Note the path for Chrome is `Software\Policies\Google\Chrome\ExtensionInstallBlocklist` so to adapt to Edge is only changing `Google\Chrome` to `Microsoft\Edge`
 - Disable built in password managers for Chrome, Firefox, and Edge
 - Enforce browser restart after update for Chrome and Edge
   - <https://github.com/dkbrookie/Software/blob/master/Google/Chrome/Policies/Install_Google_Chrome_-_Relaunch_Enforcement.ps1>

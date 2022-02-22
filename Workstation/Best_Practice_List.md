@@ -41,6 +41,8 @@
 ### Browser Control
 
 - Block user extension installation for Chrome, Firefox, and Edge
+  - <https://chromeenterprise.google/policies/#ExtensionInstallBlocklist>. 
+    >"A blocklist value of '*' means all extensions are blocked unless they are explicitly listed in the allowlist"
 - Disable built in password managers for Chrome, Firefox, and Edge
 - Enforce browser restart after update for Chrome and Edge
   - <https://github.com/dkbrookie/Software/blob/master/Google/Chrome/Policies/Install_Google_Chrome_-_Relaunch_Enforcement.ps1>
@@ -88,4 +90,6 @@
 ## Maintenance
 
 - Disk cleanup once weekly
-- Disk defrag if disk is more than 15% fragemented. Only start defrag after 10PM or inside of maintenance window.
+- Disk defrag if disk is more than 15% fragemented
+  - Disk must be spindle, not an SSD/NVMe
+  - Only start defrag after 10PM or inside of maintenance window

@@ -65,7 +65,8 @@
 
 - Proper Windows build number defined by Github
 - Stopped/Disabled "UsoSvc" service (Update Orchestrator Service)
-- Hidden Windows Updates: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer', "SettingsPageVisibility" REG_SZ with a value of "hide:windowsupdate"
+- Hidden Windows Updates
+  - `HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer`, `SettingsPageVisibility` REG_SZ with a value of `hide:windowsupdate`
 - Max Powershell version per OS
 
 ### Hardware

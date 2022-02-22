@@ -34,12 +34,11 @@
 - Hidden Windows Updates: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer', "SettingsPageVisibility" REG_SZ with a value of "hide:windowsupdate"
 - Max Powershell version per OS
 ### Hardware
-- Verify no missing drivers, attempt Windows driver update to remediate <br>
+- Verify no missing drivers, attempt Windows driver update to remediate<br>
 ```Get-WmiObject Win32_PNPEntity -EA 0 | Where-Object{$_.Availability -eq 11 -or $_.Availability -eq 12}```
-- Verify hardware devices in Error, Degraded, or Unknown states <br>
+- Verify hardware devices in Error, Degraded, or Unknown states<br>
 ```Get-PnpDevice -PresentOnly -Status ERROR,DEGRADED,UNKNOWN -EA 0```
-
-
+<br><br>
 # Best Practice Checks
 - Pro/Enterprise OS 
 - More than 8GBs of RAM
@@ -47,8 +46,7 @@
 - No file shares
 - No print shares
 - Check to see if domain joined
-
-
+<br><br>
 # Monitoring
 - Any services defined as installed and monitored via the service Powershell function
 - Verify "UsoSvc" service (Update Orchestrator Service) is stopped and disabled

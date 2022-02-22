@@ -5,7 +5,7 @@
 - Set HOSTS file to default
   - ```$env:WINDOWS\System32\Drivers\etc\hosts```
 - Ensure "Auto Logon" is disabled
-  - <https://windowsreport.com/auto-login-windows-10/>
+  - Check for presence of the `DefaultPassword` REG_SZ in the `HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon` key. If it exists, delete it.
 - Only member in "Local Administrators" group is ".\local_dkbtech"
 - DHCP DNS on all NICs
   - Mechanism to exclude machine if required, but enforced by default
@@ -41,10 +41,15 @@
 ### Browser Control
 
 - Block user extension installation for Chrome, Firefox, and Edge
-  - <https://chromeenterprise.google/policies/#ExtensionInstallBlocklist>. 
+  - <https://chromeenterprise.google/policies/#ExtensionInstallBlocklist>.
     >"A blocklist value of '*' means all extensions are blocked unless they are explicitly listed in the allowlist"
   - Note the path for Chrome is `Software\Policies\Google\Chrome\ExtensionInstallBlocklist` so to adapt to Edge is only changing `Google\Chrome` to `Microsoft\Edge`
+  - Note in this scenario you need to make a REG_SZ value inside of that registry key location named '1' (no quotes) and the value will be literally '*' (no quotes)
 - Disable built in password managers for Chrome, Firefox, and Edge
+  - <https://chromeenterprise.google/policies/?policy=PasswordManagerEnabled>
+  >"false = Disable saving passwords using the password manager"
+  In windows reg, the value of 0 is disabled.
+  - Note the path for Chrome is `Software\Policies\Google\Chrome\ExtensionInstallBlocklist` so to adapt to Edge is only changing `Google\Chrome` to `Microsoft\Edge`
 - Enforce browser restart after update for Chrome and Edge
   - <https://github.com/dkbrookie/Software/blob/master/Google/Chrome/Policies/Install_Google_Chrome_-_Relaunch_Enforcement.ps1>
   - <https://github.com/dkbrookie/Software/blob/master/Google/Chrome/Policies/Remove_Google_Chrome_-_Relaunch_Enforcement.ps1>

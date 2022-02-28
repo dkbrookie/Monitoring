@@ -3,14 +3,16 @@
 ## General Configuration
 
 - Set HOSTS file to default
-  - ```$env:WINDOWS\System32\Drivers\etc\hosts```
-- Ensure "Auto Logon" is disabled
-  - Check for presence of the `DefaultPassword` REG_SZ in the `HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon` key. If it exists, delete it.
+  - **Path**: $env:WINDOWS\System32\Drivers\etc\hosts
+- Ensure "Auto Logon" is disabled. If the following REG_SZ exists, delete it
+  - **Path**: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+  - **Name**: DefaultPassword
+  - **Type**: REG_SZ
+  - **Value**: N/A
 - Only member in "Local Administrators" group is ".\local_dkbtech"
 - DHCP DNS on all NICs
   - Mechanism to exclude machine if required, but enforced by default
 - Verify we cannot hit pastebin.com
-- Verify we cannot launch IP scanners
 - Verify we cannot hit bit.ly
 - Enable Windows firewall on all profiles
 
@@ -159,7 +161,10 @@
 - Proper Windows build number defined by Github
 - Stopped/Disabled "UsoSvc" service (Update Orchestrator Service)
 - Hidden Windows Updates
-  - `HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer`, `SettingsPageVisibility` REG_SZ with a value of `hide:windowsupdate`
+  - **Path**: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer
+  - **Name**: SettingsPageVisibility
+  - **Type**: REG_SZ
+  - **Value**: hide:windowsupdate
 - Max Powershell version per OS
 
 ### Hardware
@@ -193,3 +198,7 @@
 - Disk defrag if disk is more than 15% fragemented
   - Disk must be spindle, not an SSD/NVMe
   - Only start defrag after 10PM or inside of maintenance window
+
+## Low Priority Wish List
+- Verify we cannot launch IP scanners
+  - Don't think we can implement this since we use it for techs so often...so need a way to either block it to specific users, or to alert when it's used.

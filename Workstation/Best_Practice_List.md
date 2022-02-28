@@ -9,12 +9,39 @@
   - **Name**: DefaultPassword
   - **Type**: REG_SZ
   - **Value**: N/A
-- Only member in "Local Administrators" group is ".\local_dkbtech"
+- Only member in `Local Administrators` group is `.\local_dkbtech`
 - DHCP DNS on all NICs
-  - Mechanism to exclude machine if required, but enforced by default
+  - Code to enable DHCP on all active NICs
+  ```
+  # Get all IPv4 network adapters that have an active connection. That means this ignores WiFI and/or physical 
+  # NICs with no connection
+  Get-NetAdapter | ? {$_.Status -eq "Up"} | Get-NetIPInterface -AddressFamily IPv4 | ForEach-Object {
+  If ($_.Dhcp -eq "Enabled") {
+    # Enable DHCP on the adapter in the current iteration
+    $_ | Set-NetIPInterface -DHCP Enabled
+    # After you set DHCP to enabled it will not grab an IP automatically so you need to tell it to do that
+    ipconfig /release
+    ipconfig /renew
+    }
+  }
+  ```
+  - Code to check the status of DHCP on all active NICs
+  ```
+  Get-NetAdapter | ? {$_.Status -eq "Up"} | Get-NetIPInterface -AddressFamily IPv4
+  ```
 - Verify we cannot hit pastebin.com
+  - Accomplish with Umbrella?
 - Verify we cannot hit bit.ly
-- Enable Windows firewall on all profiles
+  - Accomplish with Umbrella?
+- Enforce Windows firewall to be enabled
+  - Enable the firewall on all profiles
+  ```
+  Net-NetFirewallProfile -Profile Domain, Public, Private -Enabled True
+  ```
+  - Check the status of the firewall on all profiles
+  ```
+  Get-NetFirewallProfile
+  ```
 
 ### Audit Log Configuration
 - Max `Application` log configuration
@@ -114,6 +141,8 @@
 - Enabled
 - Definitions fully updated from Windows Update (none pending install)
 - Running in passive mode
+- This script was created to manually disable Defender in scenarios where the OS doesn't support Defender passive mode. I would also like to not assume that Defender is enabled and in passive mode (like this current script does) and instead verify it's enabled with code and then ensure it's in passive mode IF SentineLOne is installed.
+  - <https://github.com/dkbrookie/Software/blob/master/Microsoft/Windows_Defender/Manually_Disable.ps1>
 
 ### SentinelOne
 
@@ -170,9 +199,13 @@
 ### Hardware
 
 - Verify no missing drivers, attempt Windows driver update to remediate
-  - ```Get-WmiObject Win32_PNPEntity -EA 0 | Where-Object{$_.Availability -eq 11 -or $_.Availability -eq 12}```
+  ```
+  Get-WmiObject Win32_PNPEntity -EA 0 | Where-Object{$_.Availability -eq 11 -or $_.Availability -eq 12}
+  ```
 - Verify hardware devices in Error, Degraded, or Unknown states
-  - ```Get-PnpDevice -PresentOnly -Status ERROR,DEGRADED,UNKNOWN -EA 0```
+  ```
+  Get-PnpDevice -PresentOnly -Status ERROR,DEGRADED,UNKNOWN -EA 0
+  ```
 
 ## Best Practice Checks
 

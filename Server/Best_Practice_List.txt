@@ -1,3 +1,5 @@
 1) DHCP enabled
 2) Modified hosts file
 3) Service running as user
+4) Hypervsior differencing disks
+5) Server disk corruption

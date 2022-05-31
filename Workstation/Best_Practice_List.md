@@ -1,30 +1,88 @@
 # Workstation Configuration Enforcement
 
-## General Configuration
+## Keys
 
-- Set HOSTS file to default
-  - **Path**: $env:WINDOWS\System32\Drivers\etc\hosts
-- Ensure "Auto Logon" is disabled. If the following REG_SZ exists, delete it
-  - **Path**: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
-  - **Name**: DefaultPassword
-  - **Type**: REG_SZ
-  - **Value**: N/A
-- Only member in `Local Administrators` group is `.\local_dkbtech`
-- DHCP DNS on all NICs
-  - Code to enable DHCP on all active NICs
-  ```
-  # Get all IPv4 network adapters that have an active connection. That means this ignores WiFI and/or physical 
-  # NICs with no connection
-  Get-NetAdapter | ? {$_.Status -eq "Up"} | Get-NetIPInterface -AddressFamily IPv4 | ForEach-Object {
-  If ($_.Dhcp -eq "Enabled") {
-    # Enable DHCP on the adapter in the current iteration
-    $_ | Set-NetIPInterface -DHCP Enabled
-    # After you set DHCP to enabled it will not grab an IP automatically so you need to tell it to do that
-    ipconfig /release
-    ipconfig /renew
-    }
-  }
-  ```
+Status
+
+- Pass = `1`
+- Fail = `2`
+- Variance = `3`
+
+Remediation
+
+- Not Remediated = `0`
+- Remediated = `1`
+
+### Check HOSTS file
+
+- **Path**: `$env:WINDOWS\System32\Drivers\etc\hosts`
+- **Details**: None
+- **Action**:
+  - None
+- **Output**:
+  - If HOSTS file not modified
+    - STATUS: `1`
+    - REMEDIATED: `0`
+  - If HOSTS file is modified
+    - STATUS: `3`
+    - REMEDIATED: `0`
+    - [HOSTS FILE CONTENTS]
+
+### Ensure "Auto Logon" is disabled
+
+- **Path**: `HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon`
+- **Name**: `DefaultPassword`
+- **Type**: `REG_SZ`
+- **Value**: N/A
+- **Action**:
+  - Delete the `DefaultPassword` REG_SZ key if exists
+- **Output**:
+  - If `DefaultPassword` REG_SZ key not present
+    - STATUS: `1`
+    - REMEDIATED: `0`
+  - If `DefaultPassword` REG_SZ key deleted by script
+    - STATUS: `1`
+    - REMEDIATED: `1`
+  - If `DefaultPassword` present and remediation is disabled for any reason (client specifies or any other)
+    - STATUS: `2`
+    - REMEDIATED: `0`
+  
+### Verify Local Admin membership
+
+- **Local Admin Group Members**:
+  - `wks_dkbtech` (domain)
+  - `lcl_dkbtech` (local)
+  - `[Hidden AutoElevate Account]` (local)
+  - `[Local user accounts specified by client]` (local)
+- **Action**:
+  - Remove all users from the local admin group that are not defined in the list above
+- **Output**:
+  - If only user above exist in the local Administrators group
+    - STATUS: `1`
+    - REMEDIATED: `0`
+  - If script removes all users successfully other than users above
+    - STATUS: `1`
+    - REMEDIATED: `1`
+  - If users exist in the local Administrators group outside of this defined list for any reason
+    - STATUS: 2
+    - REMEDIATED: `0`
+
+### DHCP DNS on all NICs
+
+Code to enable DHCP on all active NICs
+```
+# Get all IPv4 network adapters that have an active connection. That means this ignores WiFI and/or physical 
+# NICs with no connection
+Get-NetAdapter | ? {$_.Status -eq "Up"} | Get-NetIPInterface -AddressFamily IPv4 | ForEach-Object {
+If ($_.Dhcp -eq "Enabled") {
+# Enable DHCP on the adapter in the current iteration
+$_ | Set-NetIPInterface -DHCP Enabled
+# After you set DHCP to enabled it will not grab an IP automatically so you need to tell it to do that
+ipconfig /release
+ipconfig /renew
+}
+}
+```
   - Code to check the status of DHCP on all active NICs
   ```
   Get-NetAdapter | ? {$_.Status -eq "Up"} | Get-NetIPInterface -AddressFamily IPv4

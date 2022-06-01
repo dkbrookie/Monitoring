@@ -69,29 +69,72 @@ Remediation
 
 ### DHCP DNS on all NICs
 
-Code to enable DHCP on all active NICs
-```
-# Get all IPv4 network adapters that have an active connection. That means this ignores WiFI and/or physical 
-# NICs with no connection
-Get-NetAdapter | ? {$_.Status -eq "Up"} | Get-NetIPInterface -AddressFamily IPv4 | ForEach-Object {
-If ($_.Dhcp -eq "Enabled") {
-# Enable DHCP on the adapter in the current iteration
-$_ | Set-NetIPInterface -DHCP Enabled
-# After you set DHCP to enabled it will not grab an IP automatically so you need to tell it to do that
-ipconfig /release
-ipconfig /renew
-}
-}
-```
+- **Desired State**:
+  - All physical NICS connected (NICs with active connections) have DHCP enabled for both IP and DNS servers
+- **Action**:
+  - None
+- **Output**:
+  - If DHCP is enabled and being used for the IP and for DNS
+    - STATUS: `1`
+    - REMEDIATED: `0`
+  - If DHCP is not being used for either the IP or DNS
+    - STATUS: `3`
+    - REMEDIATED: `0`
+- **Helpful Code**:
   - Code to check the status of DHCP on all active NICs
   ```
   Get-NetAdapter | ? {$_.Status -eq "Up"} | Get-NetIPInterface -AddressFamily IPv4
   ```
-- Verify we cannot hit pastebin.com
-  - Accomplish with Umbrella?
-- Verify we cannot hit bit.ly
-  - Accomplish with Umbrella?
-- Enforce Windows firewall to be enabled
+  - Code to enable DHCP on all active NICs
+  ```
+  # Get all IPv4 network adapters that have an active connection. That means this ignores WiFI and/or physical 
+  # NICs with no connection
+  Get-NetAdapter | ? {$_.Status -eq "Up"} | Get-NetIPInterface -AddressFamily IPv4 | ForEach-Object {
+    If ($_.Dhcp -eq "Enabled") {
+      # Enable DHCP on the adapter in the current iteration
+      $_ | Set-NetIPInterface -DHCP Enabled
+      # After you set DHCP to enabled it will not grab an IP automatically so you need to tell it to do that
+      ipconfig /release
+      ipconfig /renew
+    }
+  }
+  ```
+
+### Block domains
+
+- **Desired State**:
+  - Verify we cannot hit pastebin.com
+  - Verify we cannot hit bit.ly
+- **Action**:
+  - Add pastbin.com and bit.ly to the `HOSTS` file and point to local loopback 127.0.0.1
+- **Output**:
+  - If unable to ping pastebin.com and bit.ly and no action was taken from the script
+    - STATUS: `1`
+    - REMEDIATED: `0`
+  - If unable to ping pastebin.com and bit.ly and the script performed actions to enforce this
+    - STATUS: `1`
+    - REMEDIATED: `1`
+  - If able to ping either pastebin.com or bit.ly
+    - STATUS: `2`
+    - REMEDIATED: `0`
+
+### Enable Windows Firewall
+
+- **Desired State**:
+  - Windows firewall enabled for all networks (Domain, Public, Private)
+- **Action**:
+  - Enable firewall on all networks if not already enabled
+- **Output**:
+  - If firewall is enabled on all 3 networks with no action from script
+    - STATUS: `1`
+    - REMEDIATED: `0`
+  - If firewall was disabled then enabled by script
+    - STATUS: `1`
+    - REMEDIATED: `1`
+  - If firewall is disabled and excluded from being enabled for any reason
+    - STATUS: `2`
+    - REMEDIATED: `0`
+- **Helpful Code**:
   - Enable the firewall on all profiles
   ```
   Net-NetFirewallProfile -Profile Domain, Public, Private -Enabled True
@@ -101,97 +144,132 @@ ipconfig /renew
   Get-NetFirewallProfile
   ```
 
+### Disable RDP
+- **Desired State**:
+  - RDP should be disabled for all workstations
+- **Action**:
+  - Disabled RDP if it is not already disabled
+- **Output**:
+  - If RDP is already disabled with no action taken
+    - STATUS: `1`
+    - REMEDIATED: `0`
+  - If RDP was enabled and our script disables it
+    - STATUS: `1`
+    - REMEDIATED: `1`
+  - If RDP is disabled and remediation is excluded for any reason
+    - STATUS: `2`
+    - REMEDIATED: `0`
+
 ### Audit Log Configuration
-- Max `Application` log configuration
-  - **Path**: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\Application
-  - **Name**: MaxSize
-  - **Type**: REG_DWORD
-  - **Value**: 102400
-- Max `Security` log configuration
-  - **Path**: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\Security
-  - **Name**: MaxSize
-  - **Type**: REG_DWORD
-  - **Value**: 102400
-- Max `System` log configuration
-  - **Path**: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\System
-  - **Name**: MaxSize
-  - **Type**: REG_DWORD
-  - **Value**: 102400
-- Max `Setup` log configuration
-  - **Path**: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\Setup
-  - **Name**: MaxSize
-  - **Type**: REG_DWORD
-  - **Value**: 102400
-- Prevent local guests group from accessing `Application` log
-  - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Application
-  - **Name**: RestrictGuestAccess
-  - **Type**: REG_DWORD
-  - **Value**: 1
-- Prevent local guests group from accessing `System` log
-  - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\System
-  - **Name**: RestrictGuestAccess
-  - **Type**: REG_DWORD
-  - **Value**: 1
-- Prevent local guests group from accessing `Security` log
-  - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Security
-  - **Name**: RestrictGuestAccess
-  - **Type**: REG_DWORD
-  - **Value**: 1
-- Retain `Application` log
-  - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Application
-  - **Name**: AutoBackupLogFiles
-  - **Type**: REG_DWORD
-  - **Value**: 0
-- Retain `Security` log
-  - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Security
-  - **Name**: AutoBackupLogFiles
-  - **Type**: REG_DWORD
-  - **Value**: 0
-- Retain `System` log
-  - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\System
-  - **Name**: AutoBackupLogFiles
-  - **Type**: REG_DWORD
-  - **Value**: 0
-- Retention method for `Application` log
-  - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Application
-  - **Name**: Retention
-  - **Type**: REG_DWORD
-  - **Value**: 0
-- Retention method for `Security` log
-  - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Security
-  - **Name**: Retention
-  - **Type**: REG_DWORD
-  - **Value**: 0
-- Retention method for `System` log
-  - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\System
-  - **Name**: Retention
-  - **Type**: REG_DWORD
-  - **Value**: 0
-- Windows `Powershell` Log Max Size
-  - **Path**: HKLM:\SYSTEM\CurrentControlSet\services\eventlog\Windows PowerShell
-  - **Name**: MaxSize
-  - **Type**: REG_DWORD
-  - **Value**: 1048576
-- Windows `Powershell` Log Retention
-  - **Path**: HKLM:\SYSTEM\CurrentControlSet\services\eventlog\Windows PowerShell
-  - **Name**: Retention
-  - **Type**: REG_DWORD
-  - **Value**: 0
-- `Microsoft-Windows-PowerShell/Operational` Log
-  - **Path**: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-PowerShell/Operational
-  - **Name**: Enabled
-  - **Type**: REG_DWORD
-  - **Value**: 1
-- `Microsoft-Windows-PowerShell/Operational` Log Max Size
-  - **Path**: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-PowerShell/Operational
-  - **Name**: MaxSize
-  - **Type**: REG_DWORD
-  - **Value**: 1048576
-- `Microsoft-Windows-PowerShell/Operational` Log Retention
-  - **Path**: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-PowerShell/Operational
-  - **Name**: Retention
-  - **Type**: REG_DWORD
-  - **Value**: 0
+
+Note the output state here applies to the output for all of these registry entries. Since there's so much
+data the format here is switched up slightly.
+
+- **Desired State**:
+  - For all registry values below to be the live production values for all endpoints
+- **Action**:
+  - Align the registry value to the stated values below in the Registry Values section
+- **Output**:
+  - If the registry key and value already exist as stated below
+    - STATUS: `1`
+    - REMEDIATED: `0`
+  - If the registry key doesn't exist, or the value doesn't match, and the script remediated
+    - STATUS: `1`
+    - REMEDIATED: `1`
+  - If the registy key doesn't exist, or the value doesn't match, and setting these to expected values is excluded for any reason
+    - STATUS: `2`
+    - REMEDIATED: `0`
+- **Registry Values**
+  - Max `Application` log configuration
+    - **Path**: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\Application
+    - **Name**: MaxSize
+    - **Type**: REG_DWORD
+    - **Value**: 102400
+  - Max `Security` log configuration
+    - **Path**: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\Security
+    - **Name**: MaxSize
+    - **Type**: REG_DWORD
+    - **Value**: 102400
+  - Max `System` log configuration
+    - **Path**: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\System
+    - **Name**: MaxSize
+    - **Type**: REG_DWORD
+    - **Value**: 102400
+  - Max `Setup` log configuration
+    - **Path**: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\Setup
+    - **Name**: MaxSize
+    - **Type**: REG_DWORD
+    - **Value**: 102400
+  - Prevent local guests group from accessing `Application` log
+    - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Application
+    - **Name**: RestrictGuestAccess
+    - **Type**: REG_DWORD
+    - **Value**: 1
+  - Prevent local guests group from accessing `System` log
+    - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\System
+    - **Name**: RestrictGuestAccess
+    - **Type**: REG_DWORD
+    - **Value**: 1
+  - Prevent local guests group from accessing `Security` log
+    - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Security
+    - **Name**: RestrictGuestAccess
+    - **Type**: REG_DWORD
+    - **Value**: 1
+  - Retain `Application` log
+    - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Application
+    - **Name**: AutoBackupLogFiles
+    - **Type**: REG_DWORD
+    - **Value**: 0
+  - Retain `Security` log
+    - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Security
+    - **Name**: AutoBackupLogFiles
+    - **Type**: REG_DWORD
+    - **Value**: 0
+  - Retain `System` log
+    - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\System
+    - **Name**: AutoBackupLogFiles
+    - **Type**: REG_DWORD
+    - **Value**: 0
+  - Retention method for `Application` log
+    - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Application
+    - **Name**: Retention
+    - **Type**: REG_DWORD
+    - **Value**: 0
+  - Retention method for `Security` log
+    - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Security
+    - **Name**: Retention
+    - **Type**: REG_DWORD
+    - **Value**: 0
+  - Retention method for `System` log
+    - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\System
+    - **Name**: Retention
+    - **Type**: REG_DWORD
+    - **Value**: 0
+  - Windows `Powershell` Log Max Size
+    - **Path**: HKLM:\SYSTEM\CurrentControlSet\services\eventlog\Windows PowerShell
+    - **Name**: MaxSize
+    - **Type**: REG_DWORD
+    - **Value**: 1048576
+  - Windows `Powershell` Log Retention
+    - **Path**: HKLM:\SYSTEM\CurrentControlSet\services\eventlog\Windows PowerShell
+    - **Name**: Retention
+    - **Type**: REG_DWORD
+    - **Value**: 0
+  - `Microsoft-Windows-PowerShell/Operational` Log
+    - **Path**: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-PowerShell/Operational
+    - **Name**: Enabled
+    - **Type**: REG_DWORD
+    - **Value**: 1
+  - `Microsoft-Windows-PowerShell/Operational` Log Max Size
+    - **Path**: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-PowerShell/Operational
+    - **Name**: MaxSize
+    - **Type**: REG_DWORD
+    - **Value**: 1048576
+  - `Microsoft-Windows-PowerShell/Operational` Log Retention
+    - **Path**: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-PowerShell/Operational
+    - **Name**: Retention
+    - **Type**: REG_DWORD
+    - **Value**: 0
  
 
 ### Microsoft Defender

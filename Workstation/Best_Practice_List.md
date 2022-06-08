@@ -180,98 +180,97 @@ data the format here is switched up slightly.
     - STATUS: `2`
     - REMEDIATED: `0`
 - **Registry Values**
-  - Max `Application` log configuration
+  - Max [Application] log configuration
     - **Path**: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\Application
     - **Name**: MaxSize
     - **Type**: REG_DWORD
-    - **Value**: 102400
-  - Max `Security` log configuration
+    - **Value**: `102400`
+  - Max [Security] log configuration
     - **Path**: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\Security
     - **Name**: MaxSize
     - **Type**: REG_DWORD
-    - **Value**: 102400
-  - Max `System` log configuration
+    - **Value**: `102400`
+  - Max [System] log configuration
     - **Path**: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\System
     - **Name**: MaxSize
     - **Type**: REG_DWORD
-    - **Value**: 102400
-  - Max `Setup` log configuration
+    - **Value**: `102400`
+  - Max [Setup] log configuration
     - **Path**: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\Setup
     - **Name**: MaxSize
     - **Type**: REG_DWORD
-    - **Value**: 102400
-  - Prevent local guests group from accessing `Application` log
+    - **Value**: `102400`
+  - Prevent local guests group from accessing [Application] log
     - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Application
     - **Name**: RestrictGuestAccess
     - **Type**: REG_DWORD
-    - **Value**: 1
-  - Prevent local guests group from accessing `System` log
+    - **Value**: `1`
+  - Prevent local guests group from accessing [System] log
     - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\System
     - **Name**: RestrictGuestAccess
     - **Type**: REG_DWORD
-    - **Value**: 1
-  - Prevent local guests group from accessing `Security` log
+    - **Value**: `1`
+  - Prevent local guests group from accessing [Security] log
     - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Security
     - **Name**: RestrictGuestAccess
     - **Type**: REG_DWORD
-    - **Value**: 1
-  - Retain `Application` log
+    - **Value**: `1`
+  - Retain [Application] log
     - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Application
     - **Name**: AutoBackupLogFiles
     - **Type**: REG_DWORD
-    - **Value**: 0
-  - Retain `Security` log
+    - **Value**: `0`
+  - Retain [Security] log
     - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Security
     - **Name**: AutoBackupLogFiles
     - **Type**: REG_DWORD
-    - **Value**: 0
-  - Retain `System` log
+    - **Value**: `0`
+  - Retain [System] log
     - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\System
     - **Name**: AutoBackupLogFiles
     - **Type**: REG_DWORD
-    - **Value**: 0
-  - Retention method for `Application` log
+    - **Value**: `0`
+  - Retention method for [Application] log
     - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Application
     - **Name**: Retention
     - **Type**: REG_DWORD
-    - **Value**: 0
-  - Retention method for `Security` log
+    - **Value**: `0`
+  - Retention method for [Security] log
     - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Security
     - **Name**: Retention
     - **Type**: REG_DWORD
-    - **Value**: 0
-  - Retention method for `System` log
+    - **Value**: `0`
+  - Retention method for [System] log
     - **Path**: HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\System
     - **Name**: Retention
     - **Type**: REG_DWORD
-    - **Value**: 0
-  - Windows `Powershell` Log Max Size
+    - **Value**: `0`
+  - Windows [Powershell] Log Max Size
     - **Path**: HKLM:\SYSTEM\CurrentControlSet\services\eventlog\Windows PowerShell
     - **Name**: MaxSize
     - **Type**: REG_DWORD
-    - **Value**: 1048576
-  - Windows `Powershell` Log Retention
+    - **Value**: `1048576`
+  - Windows [Powershell] Log Retention
     - **Path**: HKLM:\SYSTEM\CurrentControlSet\services\eventlog\Windows PowerShell
     - **Name**: Retention
     - **Type**: REG_DWORD
-    - **Value**: 0
-  - `Microsoft-Windows-PowerShell/Operational` Log
+    - **Value**: `0`
+  - [Microsoft-Windows-PowerShell/Operational] Log
     - **Path**: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-PowerShell/Operational
     - **Name**: Enabled
     - **Type**: REG_DWORD
-    - **Value**: 1
-  - `Microsoft-Windows-PowerShell/Operational` Log Max Size
+    - **Value**: `1`
+  - [Microsoft-Windows-PowerShell/Operational] Log Max Size
     - **Path**: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-PowerShell/Operational
     - **Name**: MaxSize
     - **Type**: REG_DWORD
-    - **Value**: 1048576
-  - `Microsoft-Windows-PowerShell/Operational` Log Retention
+    - **Value**: `1048576`
+  - [Microsoft-Windows-PowerShell/Operational] Log Retention
     - **Path**: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-PowerShell/Operational
     - **Name**: Retention
     - **Type**: REG_DWORD
-    - **Value**: 0
+    - **Value**: `0`
  
-
 ### Microsoft Defender
 
 - Enabled

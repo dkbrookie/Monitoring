@@ -1,9 +1,0 @@
-1) SYSVOL rep type is DFS-R 
-2) Time is synced between all servers
-3) If Physical machine, time synced to external source
-4) If Hyper-V VM, time synced to host. If vmware VM, time synced to external source
-5) SYSVOL file replication regularly tested functional regularly
-6) AD Recycling Bin enabled
-7) Forest level matches lowest OS of all DCs
-8) Shadowcopy is enabled
-9) General replication tested functional regularly

@@ -82,11 +82,14 @@ Remediation
     - REMEDIATED: `0`
 - **Helpful Code**:
   - Code to check the status of DHCP on all active NICs
-  ```
+
+  ```Powershell
   Get-NetAdapter | ? {$_.Status -eq "Up"} | Get-NetIPInterface -AddressFamily IPv4
   ```
+
   - Code to enable DHCP on all active NICs
-  ```
+
+  ```Powershell
   # Get all IPv4 network adapters that have an active connection. That means this ignores WiFI and/or physical 
   # NICs with no connection
   Get-NetAdapter | ? {$_.Status -eq "Up"} | Get-NetIPInterface -AddressFamily IPv4 | ForEach-Object {
@@ -136,15 +139,19 @@ Remediation
     - REMEDIATED: `0`
 - **Helpful Code**:
   - Enable the firewall on all profiles
-  ```
+
+  ```Powershell
   Net-NetFirewallProfile -Profile Domain, Public, Private -Enabled True
   ```
+
   - Check the status of the firewall on all profiles
-  ```
+
+  ```Powershell
   Get-NetFirewallProfile
   ```
 
 ### Disable RDP
+
 - **Desired State**:
   - RDP should be disabled for all workstations
 - **Action**:
@@ -270,7 +277,7 @@ data the format here is switched up slightly.
     - **Name**: Retention
     - **Type**: REG_DWORD
     - **Value**: `0`
- 
+
 ### Microsoft Defender
 
 - Enabled
@@ -334,11 +341,14 @@ data the format here is switched up slightly.
 ### Hardware
 
 - Verify no missing drivers, attempt Windows driver update to remediate
-  ```
+
+  ```Powershell
   Get-WmiObject Win32_PNPEntity -EA 0 | Where-Object{$_.Availability -eq 11 -or $_.Availability -eq 12}
   ```
+
 - Verify hardware devices in Error, Degraded, or Unknown states
-  ```
+
+  ```Powershell
   Get-PnpDevice -PresentOnly -Status ERROR,DEGRADED,UNKNOWN -EA 0
   ```
 
@@ -368,5 +378,6 @@ data the format here is switched up slightly.
   - Only start defrag after 10PM or inside of maintenance window
 
 ## Low Priority Wish List
+
 - Verify we cannot launch IP scanners
   - Don't think we can implement this since we use it for techs so often...so need a way to either block it to specific users, or to alert when it's used.

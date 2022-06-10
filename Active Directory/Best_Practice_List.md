@@ -1,8 +1,10 @@
 # AD Desired State
 
+It would be nice to log the last "change" to the status if possible. So basically, if it was `STATUS:1` but then it was changed and went to `STATUS:2`, we should have the date it went to failed. That would highlight the date the setting was changed to take it out of alignment and could help us in logs.
+
 ## First thoughts of things to check
 
-1) SYSVOL rep type is DFS-R 
+1) SYSVOL rep type is DFS-R
 2) Time is synced between all servers
 3) If Physical machine, time synced to external source
 4) If Hyper-V VM, time synced to host. If vmware VM, time synced to external source
@@ -14,6 +16,8 @@
 
 ## vCTO Section to replace their questions
 
+As part of our desired state checks we're going to try and get rid of as many vCTO questions on their manual reviews as possible. As part of this, we need to output the data our scripts are checking, verifying, and/or fixing, and make a BG board where they can copy/paste the answer into their review. This way the questions remain, but the work (aside from copy/paste) is removed.
+
 ### Active Directory Organization
 
 Are users and computer accounts in the correct OUs in Active Directory w/ no items in the default OUs?
@@ -22,13 +26,35 @@ If users or computer accounts are not in the correct OU's then they might not ge
 
 Check default Computers OU for workstations/servers. Move workstations to the appropriate OUs in order for GPOs to apply. Proceed with caution moving servers to different OUs (especially if terminal servers). Make sure no users are in default Users OU. Move to most applicable OU (based on location, department, etc).If its found to be a result of a failed onboarding or workstation setup (SDI or PS) well do like we do with projects and push it back to the originating team to remediate.
 
+#### Tasks
+
+- [ ] Need to make a script to check for count of objects that are of the user or computer type in both the default users, and default computers OUs in AD. If maintained, these should be empty except for some default groups (which we're not concerned with at this time)
+
+#### Helpful Code
+
+```Powershell
+Get-ADUser -Filter * -SearchBase “ou=testou,dc=iammred,dc=net”
+```
+
+#### Output
+
+If the count of objects in both the default computers and default users OU is 0
+
+- STATUS: `1`
+- REMEDIATED `0`
+
+If either the default computer or default users OU returns a count of more than 0
+
+- STATUS: `2`
+- REMEDIATED: `0`
+
 ### Domain Admin Rights
 
 Verified that no end users, including IT users, are domain admins? List Domain Admin users in your answer
 
 Potential for unauthorized folder/file access to sensitive data if granted.
 
-Follow the SOP here: https://dkbinnovative.itglue.com/1119054/docs/7773531Check Domain Admin security group. Note that removing domain admin rights may affect users having local admin rights on their workstation. If admin rights are required then they need a separate account from their standard account for Domain Admin permissions.
+Follow the SOP here: <https://dkbinnovative.itglue.com/1119054/docs/7773531Check> Domain Admin security group. Note that removing domain admin rights may affect users having local admin rights on their workstation. If admin rights are required then they need a separate account from their standard account for Domain Admin permissions.
 
 ### Complex local/domain admin password
 
@@ -44,11 +70,68 @@ Are Workstation and Server local administrative rights restricted to only DKB an
 
 It is less likely for a user to inadvertently cause operating system damage if they do not have the rights to install applications or change important system settings. This also greatly reduces the risk of malware and spyware infection and damage.
 
-1.Verify there are no Local Administrator GPOs:GPOs are usually place on OU(s) where computers are stored. The patch to look for is: Computer Configuration Policies Windows Settings Security Settings Restricted Groups edit the Administrators groupThe AD group containing users who would be allowed local admin access is here. 2.You can also run the GetLocalAdminsGUI setup in CW Control tools: Tool URL http://www.cjwdev.co.uk/Software/GetLocalAdminsGUI/Info.html
+1.Verify there are no Local Administrator GPOs:GPOs are usually place on OU(s) where computers are stored. The patch to look for is: Computer Configuration Policies Windows Settings Security Settings Restricted Groups edit the Administrators groupThe AD group containing users who would be allowed local admin access is here. 2.You can also run the GetLocalAdminsGUI setup in CW Control tools: Tool URL <http://www.cjwdev.co.uk/Software/GetLocalAdminsGUI/Info.html>
 
-#### STATUS
+#### Tasks
 
-- [x] Accomplished via new CS `Library.Users` script
+- [ ] Make the `Library.Users` script live to fulfill this review question vCTO is currently manually answering
+- [ ] Output to BG dashboard that this is enforced via script, and AD check is no longer required
+- [ ] Possibly output GPOs with local admin controls enabled so they can be disabled so there's no overlap? This could be accomplished with the GPO search script we already have located here: <https://github.com/dkbrookie/General-Powershell/blob/master/Domain%20Controllers/DC.FindGPO.ps1> by searching for `Local Administrators` (needs testing)
+
+#### Helpful Code
+
+```Powershell
+## Get the string you want to search for
+$string = Read-Host -Prompt "What string do you want to search for?"
+
+## Set the domain to search for GPOs
+$DomainName = $env:USERDNSDOMAIN
+
+## Find all GPOs in the current domain
+write-host "Finding all the GPOs in $DomainName"
+Import-Module GroupPolicy
+$allGposInDomain = Get-GPO -All -Domain $DomainName
+## Look through each GPO's XML file for the string
+Write-Host "Searching...."
+ForEach ($gpo in $allGposInDomain) {
+    $report = Get-GPOReport -Guid $gpo.Id -ReportType Xml
+    If ($report -match $string) {
+        # This doesn't actually need an out file, it was just made when I was greener to
+        # storing results in vars
+        $report | Out-File "c:\gpoOut.txt"
+        $report = Get-Content "c:\gpoOut.txt"
+        Write-Host "**************************************"
+        Write-Host "** Match found in GPO"
+        Write-Host "    $($gpo.DisplayName)"
+        $valuePattern = "<q1:Value>(.*)</q1:Value>"
+        $value = [regex]::match($report, $valuePattern).Groups[1].Value
+        $linkPattern = "<SOMPath>(.*)</SOMPath>"
+        $link = $report | Select-String -Pattern $linkPattern
+        $link = $link -replace("<SOMPath>","") -replace ("</SOMPath>?","")
+        Write-Host "** Current Linked OUs"
+        ForEach($ou in $link) {
+            $ou
+        }
+    Write-Host "**************************************"
+    }
+}
+
+If((Test-Path C:\gpoOut.txt -PathType Leaf)) {
+    Remove-Item -Path C:\gpoOut.txt -Force
+}
+```
+
+#### Output
+
+If the `Library.Users` script is enforced for the client and handling local admin users
+
+- STATUS: `1`
+- REMEDIATED `1`
+
+If the `Library.Users` script is NOT enforced for the client
+
+- STATUS: `2`
+- REMEDIATED: `0`
 
 ### No Non-Expiring Passwords
 
@@ -56,11 +139,11 @@ Have you verified there are no user accounts set with non-expiring passwords? (S
 
 High risk of an attacker cracking a user's password over time if password is not set to expire.
 
-Follow the SOP here: https://dkbinnovative.itglue.com/1119054/docs/7773531
+Follow the SOP here: <https://dkbinnovative.itglue.com/1119054/docs/7773531>
 
 #### Code
 
-```powershell
+```Powershell
 # Import the AD module to the session
 Import-Module ActiveDirectory
 
@@ -71,9 +154,10 @@ Get-Aduser -Filter * -Properties Name, PasswordNeverExpires | Where {
 } |  Select-Object DistinguishedName,Name,Enabled
 ```
 
-#### Status
+#### Tasks
 
-- [ ] Incomplete
+- [ ] Test the above code on a Primary Domain Controller and verify the reuslts are accurate
+- [ ] If service accounts are identified that are OK to be in place that are not prefaced witih `svc_` there may be scenarios where that's okay, so we may need a place to make an "exclusions" list for passord never expires accounts
 
 ### Complex Passwords
 
@@ -161,7 +245,7 @@ User accounts not used in the last 90 days have been disabled?
 
 Disabling inactive accounts regularly prevents ex-employees from attempting to access the network.
 
-Follow the SOP here: https://dkbinnovative.itglue.com/1119054/docs/7773531
+Follow the SOP here: <https://dkbinnovative.itglue.com/1119054/docs/7773531>
 
 ### AD Recycle Bin
 
@@ -169,4 +253,4 @@ Is AD Recycle Bin enabled on domain controllers?
 
 Enabling AD recycle Bin allows you to restore users that have been disabled.
 
-This can be done via the GUI or powershell, https://blog.technotesdesk.com/how-to-enable-active-directory-recycle-bin-in-server-2012-r2https://activedirectorypro.com/enable-active-directory-recycle-bin-server-2016/
+This can be done via the GUI or powershell, <https://blog.technotesdesk.com/how-to-enable-active-directory-recycle-bin-in-server-2012-r2https://activedirectorypro.com/enable-active-directory-recycle-bin-server-2016/>

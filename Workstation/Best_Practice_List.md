@@ -280,11 +280,29 @@ data the format here is switched up slightly.
 
 ### Microsoft Defender
 
-- Enabled
-- Definitions fully updated from Windows Update (none pending install)
-- Running in passive mode
-- This script was created to manually disable Defender in scenarios where the OS doesn't support Defender passive mode. I would also like to not assume that Defender is enabled and in passive mode (like this current script does) and instead verify it's enabled with code and then ensure it's in passive mode IF SentineLOne is installed.
-  - <https://github.com/dkbrookie/Software/blob/master/Microsoft/Windows_Defender/Manually_Disable.ps1>
+- **Desired State**:
+  - Protection enabled
+  - Running in passive mode if S1 is installed
+  - Disabled if OS does not support passive mode and S1 is installed
+- **Action**:
+  - Enable protection if disabled and S1 installed
+  - Set to passive mode if not in passive mode and S1 is installed
+- **Output**:
+  - If Defender is enabled and running in passive mode with S1 installed
+    - STATUS: `1`
+    - REMEDIATED: `0`
+  - If Defender was not enabled and in passive mode if S1 is installed, then the script corrected it to desired state
+    - STATUS: `1`
+    - REMEDIATED: `1`
+  - If Defender is not enabled or not in passive mode for any reason and S1 is installed
+    - STATUS: `2`
+    - REMEDIATED: `0`
+  - If S1 is not installed
+    - STATUS: `3`
+    - REMEDIATED: `0`
+- **Helpful Code**:
+  - This script was created to manually disable Defender in scenarios where the OS doesn't support Defender passive mode. I would also like to not assume that Defender is enabled and in passive mode (like this current script does) and instead verify it's enabled with code and then ensure it's in passive mode IF SentineLOne is installed.
+  <https://github.com/dkbrookie/Software/blob/master/Microsoft/Windows_Defender/Manually_Disable.ps1>
 
 ### SentinelOne
 

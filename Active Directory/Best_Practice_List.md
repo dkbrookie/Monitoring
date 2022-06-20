@@ -33,6 +33,7 @@ Check default Computers OU for workstations/servers. Move workstations to the ap
 #### Helpful Code
 
 ```Powershell
+# Gets objects from a specific OU, will need to be filtered still for only user/computer types
 Get-ADUser -Filter * -SearchBase “ou=testou,dc=iammred,dc=net”
 ```
 
@@ -42,11 +43,13 @@ If the count of objects in both the default computers and default users OU is 0
 
 - STATUS: `1`
 - REMEDIATED `0`
+- TEXT OUTPUT: List of users that are in the default users OU, and a list of computers in the default OU. For the vCTO to be able to handle this output and use it in their review this really should be separated into different list whether that's just new line separated or otherwise.
 
-If either the default computer or default users OU returns a count of more than 0
+If either the default computer or default users OU returns a count of more than 0, and there's no remediation steps taken
 
 - STATUS: `2`
 - REMEDIATED: `0`
+- TEXT OUTPUT: Null
 
 ### Domain Admin Rights
 
@@ -56,6 +59,15 @@ Potential for unauthorized folder/file access to sensitive data if granted.
 
 Follow the SOP here: <https://dkbinnovative.itglue.com/1119054/docs/7773531Check> Domain Admin security group. Note that removing domain admin rights may affect users having local admin rights on their workstation. If admin rights are required then they need a separate account from their standard account for Domain Admin permissions.
 
+#### Tasks
+
+- [ ] Need to find a way to quantify how to identify domain admin access that shouldn't be in place. There's several indicators I can think of so just going to list them out for consideration:
+
+  - Username or display name contains the word `Admin`
+  - User is regularly used as a primary login. Not sure how to measure this off the top of my head...maybe a way to measure session time? This may not be doable.
+  - User has interactive logon pernmission to any machine other than the domain controller
+  - User is being used to logon as a service but is not prefaced with `svc_`
+
 ### Complex local/domain admin password
 
 Are complex passwords in place for local and domain administrators?
@@ -63,6 +75,65 @@ Are complex passwords in place for local and domain administrators?
 Prevents unauthorized access to domain (or workstation) level tasks; harder to crack if password is complex.
 
 Verify what the password is and if its not at least 12+ characters with uppercase, lowercase, number and symbol requirements then it is not strong and complex enough.
+
+#### Tasks / Strategy
+
+- [ ] Verify we have a good way to check the password complexity requirements for a domain
+- [ ] Since we know GPOs often fail in remote user situations due to no VPN, it may be best to look into verifying password complexity settings on local machine instead of the AD GPO policy...just look into this. In theory, if the policy exists at the GPO, the local policy should reflect the same so checking the local policy should be the best way to verify.
+- [ ] Look into secpol. I actually think secpol may be the best answer for a lot of the things we are looking at for workstations.
+  - [ ] [https://www.itechtics.com/enable-secpol-msc/]
+  - [ ] [https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/security-policy-settings-reference]
+  - [ ] [https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/password-policy]
+  - [ ] [https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/maximum-password-age]
+  - [ ] [https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/minimum-password-length]
+  - [ ] [https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/password-must-meet-complexity-requirements]
+
+#### Helpful Code
+
+Powershell on domain controller
+
+```Powershell
+# Contains information for the password policy set at the root policy on a given domain
+Get-ADDefaultDomainPasswordPolicy
+```
+
+Example output:
+
+```Powershell
+ComplexityEnabled           : True
+DistinguishedName           : DC=yourdomain,DC=com
+LockoutDuration             : 00:30:00
+LockoutObservationWindow    : 00:30:00
+LockoutThreshold            : 3
+MaxPasswordAge              : 42.00:00:00
+MinPasswordAge              : 1.00:00:00
+MinPasswordLength           : 7
+objectClass                 : {domainDNS}
+objectGuid                  : 44e3c936-5c8f-40cd-af67-f846c184cc8c
+PasswordHistoryCount        : 24
+ReversibleEncryptionEnabled : False
+```
+
+CMD on local machine:
+
+```CMD
+net accounts
+```
+
+Example output:
+
+```CMD
+Force user logoff how long after time expires?:       Never
+Minimum password age (days):                          0
+Maximum password age (days):                          42
+Minimum password length:                              0
+Length of password history maintained:                None
+Lockout threshold:                                    Never
+Lockout duration (minutes):                           30
+Lockout observation window (minutes):                 30
+Computer role:                                        WORKSTATION
+The command completed successfully.
+```
 
 ### Local Admin Rights
 
@@ -123,15 +194,23 @@ If((Test-Path C:\gpoOut.txt -PathType Leaf)) {
 
 #### Output
 
-If the `Library.Users` script is enforced for the client and handling local admin users
+If the `Library.Users` script is enforced for the client handling local admin users, and there's no GPOs linked to OUs that have local admin permissions defined
 
 - STATUS: `1`
 - REMEDIATED `1`
+- TEXT OUTPUT: NULL
 
-If the `Library.Users` script is NOT enforced for the client
+If the `Library.Users` script is enforced for the client handling local admin users, but there is a GPO linked to an OU with local admin controls configured
+
+- STATUS: `3`
+- REMEDIATED: `1`
+- TEXT OUTPUT: All GPO names that are defining local admin polic that are linked to an OU
+
+If the `Library.Users` script is not enforced for any reason
 
 - STATUS: `2`
 - REMEDIATED: `0`
+- TEXT OUTUPUT: `The Library.Users script is not enforced`
 
 ### No Non-Expiring Passwords
 
